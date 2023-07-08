@@ -186,9 +186,10 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 
 	leftMiddleDesc := canvas.NewText(lineChart.leftMiddleDesc, theme.ForegroundColor())
 	leftMiddleDesc.TextSize = 18
-	leftMiddleDesc.Resize(fyne.NewSize(16, 200))
+	leftMiddleDesc.Resize(fyne.NewSize(12, 200))
 	rightMiddleDesc := canvas.NewText(lineChart.rightMiddleDesc, theme.ForegroundColor())
 	rightMiddleDesc.TextSize = 18
+	rightMiddleDesc.Resize(fyne.NewSize(12, 200))
 
 	return &sknLineChartRenderer{
 		widget:             lineChart,
