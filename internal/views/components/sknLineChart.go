@@ -51,7 +51,6 @@ func NewSknLineChart(title, xScale, yScale string, dataPoints []interfaces.SknDa
 
 // Create the renderer. This is called by the fyne application
 func (w *sknLineChart) CreateRenderer() fyne.WidgetRenderer {
-	// Pass this widget to the renderer so it can access the text field
 	return newSknLineChartRenderer(w)
 }
 
@@ -116,9 +115,9 @@ func (w *sknLineChart) UpdateDataSeries(newData []interfaces.SknDataSeries) {
 type sknLineChartRenderer struct {
 	widget             *sknLineChart     // Reference to the widget holding the current state
 	background         *canvas.Rectangle // A background rectangle
-	dataPointLines     []*canvas.Line
 	xInc               float32
 	yInc               float32
+	dataPoints         []*canvas.Line
 	xLines             []*canvas.Line
 	yLines             []*canvas.Line
 	xLabels            []*canvas.Text
@@ -139,9 +138,10 @@ type sknLineChartRenderer struct {
 // Do not size or move canvas objects here.
 func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 	background := canvas.NewRectangle(color.Transparent)
-	background.StrokeWidth = 1
+	background.StrokeWidth = 0.75
 	background.StrokeColor = theme.PrimaryColorNamed(theme.ColorBlue)
 
+	dataPoints := []*canvas.Line{}
 	xlines := []*canvas.Line{}
 	ylines := []*canvas.Line{}
 	xLabels := []*canvas.Text{}
@@ -152,9 +152,9 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 	yLabels = append(yLabels, yl) // x13 hi-jacked
 	for i := 0; i < 11; i++ {
 		x := canvas.NewLine(theme.PrimaryColorNamed(theme.ColorGreen))
-		x.StrokeWidth = 0.5
+		x.StrokeWidth = 0.25
 		y := canvas.NewLine(theme.PrimaryColorNamed(theme.ColorGreen))
-		y.StrokeWidth = 0.5
+		y.StrokeWidth = 0.25
 		xlines = append(xlines, x)
 		ylines = append(ylines, y)
 		xt := strconv.Itoa((10 - i) * 10)
@@ -163,6 +163,12 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 		yl := canvas.NewText(yt, theme.ForegroundColor())
 		xLabels = append(xLabels, xl)
 		yLabels = append(yLabels, yl)
+	}
+
+	for range lineChart.dataPoints {
+		x := canvas.NewLine(theme.PrimaryColorNamed(theme.ColorYellow))
+		x.StrokeWidth = 2.0
+		dataPoints = append(dataPoints, x)
 	}
 
 	topCenteredDesc := canvas.NewText(lineChart.topCenteredDesc, theme.ForegroundColor())
@@ -191,6 +197,7 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 		yLines:             ylines,
 		xLabels:            xLabels,
 		yLabels:            yLabels,
+		dataPoints:         dataPoints,
 		topLeftDesc:        canvas.NewText(lineChart.topLeftDesc, theme.ForegroundColor()),
 		topCenteredDesc:    topCenteredDesc,
 		topRightDesc:       canvas.NewText(lineChart.topRightDesc, theme.ForegroundColor()),
@@ -208,15 +215,16 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 // Note: The background and foreground colours are set from the current theme
 func (r *sknLineChartRenderer) Refresh() {
 	r.background.Refresh() // Redraw the background first
-	for _, line := range r.xLines {
+	for idx, line := range r.xLines {
 		line.Refresh()
-	}
-	for _, line := range r.yLines {
-		line.Refresh()
+		r.yLines[idx].Refresh()
 	}
 	for idx, xlbl := range r.xLabels {
 		xlbl.Refresh()
 		r.yLabels[idx].Refresh()
+	}
+	for _, point := range r.dataPoints {
+		point.Refresh()
 	}
 	r.topLeftDesc.Text = r.widget.topLeftDesc
 	r.topCenteredDesc.Text = r.widget.topCenteredDesc
@@ -270,6 +278,22 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 	r.yLabels[0].Move(fyne.NewPos(xp-10, (yp + 8)))
 	r.yLabels[0].Refresh()
 
+	xp = r.xInc * 13
+	yp = r.yInc * 12
+	lastPoint := fyne.NewPos(xp, yp)
+	yScale := (r.yInc * 10) / 100
+	xScale := (r.xInc * 10) / 100
+	for idx, point := range r.dataPoints {
+		yy := yp - (r.widget.dataPoints[idx].YValue() * yScale)
+		xx := xp - (float32(idx) * xScale)
+		thisPoint := fyne.NewPos(xx, yy)
+
+		point.Position1 = thisPoint
+		point.Position2 = lastPoint
+		point.Refresh()
+		lastPoint = thisPoint
+	}
+
 	// Make sure the background fills the widget
 	r.background.Resize(fyne.NewSize(r.xInc*12, r.yInc*11))
 	r.background.Move(fyne.NewPos(r.xInc, r.yInc))
@@ -321,7 +345,9 @@ func (r *sknLineChartRenderer) Objects() []fyne.CanvasObject {
 		objs = append(objs, lbl)
 		objs = append(objs, r.xLabels[idx])
 	}
-
+	for _, point := range r.dataPoints {
+		objs = append(objs, point)
+	}
 	return objs
 }
 

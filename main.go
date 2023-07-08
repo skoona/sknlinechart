@@ -21,7 +21,7 @@ func main() {
 	points := []interfaces.SknDataSeries{}
 	rand.NewSource(100.0)
 
-	for x := 1; x < 100; x++ {
+	for x := 1; x < 120; x++ {
 		points = append(points, entities.NewSknDataSeries(float32(x),
 			rand.Float32()*100.0,
 			time.Now().Format(time.RFC3339)))
