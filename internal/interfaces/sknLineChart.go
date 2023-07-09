@@ -6,6 +6,8 @@ import (
 )
 
 type SknLineChart interface {
+	IsDataPointMarkersEnabled() bool
+	EnableDataPointMarkers(newValue bool)
 	GetTopLeftDescription() string
 	GetTitle() string
 	GetTopRightDescription() string

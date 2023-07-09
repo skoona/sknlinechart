@@ -18,20 +18,21 @@ import (
 //
 // A text widget with themed background and foreground
 type sknLineChart struct {
-	widget.BaseWidget  // Inherit from BaseWidget
-	dataPoints         *map[string][]interfaces.SknDataSeries
-	dataPointColor     color.Color
-	dataPointScale     fyne.Size
-	dataPointLimit     int
-	topLeftDesc        string // The text to display in the widget
-	topCenteredDesc    string
-	topRightDesc       string
-	leftMiddleDesc     string
-	rightMiddleDesc    string
-	bottomCenteredDesc string
-	bottomLeftDesc     string
-	bottomRightDesc    string
-	minSize            fyne.Size
+	widget.BaseWidget      // Inherit from BaseWidget
+	dataPoints             *map[string][]interfaces.SknDataSeries
+	dataPointColor         color.Color
+	dataPointScale         fyne.Size
+	dataPointLimit         int
+	enableDataPointMarkers bool
+	topLeftDesc            string // The text to display in the widget
+	topCenteredDesc        string
+	topRightDesc           string
+	leftMiddleDesc         string
+	rightMiddleDesc        string
+	bottomCenteredDesc     string
+	bottomLeftDesc         string
+	bottomRightDesc        string
+	minSize                fyne.Size
 }
 
 var _ interfaces.SknLineChart = (*sknLineChart)(nil)
@@ -52,19 +53,20 @@ func NewSknLineChart(title, xScale, yScale string, dataPoints *map[string][]inte
 	}
 
 	w := &sknLineChart{ // Create this widget with an initial text value
-		dataPoints:         dataPoints,
-		dataPointLimit:     dpl,
-		dataPointColor:     theme.PrimaryColor(),
-		dataPointScale:     fyne.NewSize(120.0, 110.0),
-		topLeftDesc:        "top left description",
-		topCenteredDesc:    title,
-		topRightDesc:       "top right description",
-		leftMiddleDesc:     "left middle description",
-		rightMiddleDesc:    yScale,
-		bottomLeftDesc:     "bottom left description",
-		bottomCenteredDesc: xScale,
-		bottomRightDesc:    "bottom right description",
-		minSize:            fyne.NewSize(200+theme.Padding()*4, 150+theme.Padding()*4),
+		dataPoints:             dataPoints,
+		dataPointLimit:         dpl,
+		dataPointColor:         theme.PrimaryColor(),
+		dataPointScale:         fyne.NewSize(120.0, 110.0),
+		enableDataPointMarkers: true,
+		topLeftDesc:            "top left description",
+		topCenteredDesc:        title,
+		topRightDesc:           "top right description",
+		leftMiddleDesc:         "left middle description",
+		rightMiddleDesc:        yScale,
+		bottomLeftDesc:         "bottom left description",
+		bottomCenteredDesc:     xScale,
+		bottomRightDesc:        "bottom right description",
+		minSize:                fyne.NewSize(200+theme.Padding()*4, 150+theme.Padding()*4),
 	}
 	w.ExtendBaseWidget(w) // Initialize the BaseWidget
 	return w, err
@@ -82,6 +84,9 @@ func (w *sknLineChart) GetTopLeftDescription() string {
 }
 func (w *sknLineChart) GetTitle() string {
 	return w.topCenteredDesc
+}
+func (w *sknLineChart) IsDataPointMarkersEnabled() bool {
+	return w.enableDataPointMarkers
 }
 func (w *sknLineChart) GetTopRightDescription() string {
 	return w.topRightDesc
@@ -106,6 +111,9 @@ func (w *sknLineChart) SetTopLeftDescription(newValue string) {
 }
 func (w *sknLineChart) SetTitle(newValue string) {
 	w.topCenteredDesc = newValue
+}
+func (w *sknLineChart) EnableDataPointMarkers(newValue bool) {
+	w.enableDataPointMarkers = newValue
 }
 func (w *sknLineChart) SetTopRightDescription(newValue string) {
 	w.topRightDesc = newValue
@@ -184,6 +192,7 @@ type sknLineChartRenderer struct {
 	xInc               float32
 	yInc               float32
 	dataPoints         map[string][]*canvas.Line
+	dataPointMarkers   map[string][]*canvas.Circle
 	xLines             []*canvas.Line
 	yLines             []*canvas.Line
 	xLabels            []*canvas.Text
@@ -214,6 +223,7 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 	ylines := []*canvas.Line{}
 	xLabels := []*canvas.Text{}
 	yLabels := []*canvas.Text{}
+	dpMaker := map[string][]*canvas.Circle{}
 	xl := canvas.NewText("110", theme.ForegroundColor())
 	yl := canvas.NewText("120", theme.ForegroundColor())
 	xLabels = append(xLabels, xl) // x12
@@ -239,6 +249,9 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 			x := canvas.NewLine(theme.PrimaryColorNamed(point.ColorName()))
 			x.StrokeWidth = 2.0
 			dataPoints[key] = append(dataPoints[key], x)
+			z := canvas.NewCircle(theme.PrimaryColorNamed(point.ColorName()))
+			z.StrokeWidth = 4.0
+			dpMaker[key] = append(dpMaker[key], z)
 		}
 	}
 
@@ -287,6 +300,7 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 		bottomRightDesc:    canvas.NewText(lineChart.bottomRightDesc, theme.ForegroundColor()),
 		leftMiddleBox:      lBox,
 		rightMiddleBox:     rBox,
+		dataPointMarkers:   dpMaker,
 	}
 }
 
@@ -306,9 +320,10 @@ func (r *sknLineChartRenderer) Refresh() {
 		xlbl.Refresh()
 		r.yLabels[idx].Refresh()
 	}
-	for _, lines := range r.dataPoints { // data points
-		for _, point := range lines {
+	for key, lines := range r.dataPoints { // data points
+		for idx, point := range lines {
 			point.Refresh()
+			r.dataPointMarkers[key][idx].Refresh()
 		}
 	}
 	r.topLeftDesc.Text = r.widget.topLeftDesc
@@ -319,6 +334,16 @@ func (r *sknLineChartRenderer) Refresh() {
 	r.bottomLeftDesc.Text = r.widget.bottomLeftDesc
 	r.bottomCenteredDesc.Text = r.widget.bottomCenteredDesc
 	r.bottomRightDesc.Text = r.widget.bottomRightDesc
+
+	r.leftMiddleBox.RemoveAll()
+	for _, c := range r.widget.leftMiddleDesc {
+		r.leftMiddleBox.Add(canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground))))
+	}
+	r.rightMiddleBox.RemoveAll()
+	for _, c := range r.widget.rightMiddleDesc {
+		r.rightMiddleBox.Add(canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground))))
+	}
+
 	r.topLeftDesc.Refresh()
 	r.topCenteredDesc.Refresh()
 	r.topRightDesc.Refresh()
@@ -372,6 +397,7 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 		lastPoint := fyne.NewPos(xp, yp)
 		if nil == r.dataPoints[key] {
 			r.dataPoints[key] = []*canvas.Line{}
+			r.dataPointMarkers[key] = []*canvas.Circle{}
 		}
 		for idx, point := range data { // one set of lines
 			if point.Value() > r.widget.dataPointScale.Height {
@@ -389,11 +415,20 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 				x := canvas.NewLine(theme.PrimaryColorNamed(point.ColorName()))
 				x.StrokeWidth = 2.0
 				r.dataPoints[key][idx] = x
+				z := canvas.NewCircle(theme.PrimaryColorNamed(point.ColorName()))
+				z.StrokeWidth = 4.0
+				r.dataPointMarkers[key][idx] = z
 			}
 			r.dataPoints[key][idx].Position1 = thisPoint
 			r.dataPoints[key][idx].Position2 = lastPoint
 			r.dataPoints[key][idx].Refresh()
 			lastPoint = thisPoint
+			zt := fyne.NewPos(thisPoint.X-2, thisPoint.Y-2)
+			r.dataPointMarkers[key][idx].Position1 = zt
+			zb := fyne.NewPos(thisPoint.X-2, thisPoint.Y+2)
+			r.dataPointMarkers[key][idx].Position2 = zb
+			r.dataPointMarkers[key][idx].Resize(fyne.NewSize(5, 5))
+			r.dataPointMarkers[key][idx].Refresh()
 		}
 	}
 
@@ -413,7 +448,7 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 	ts = fyne.MeasureText(r.leftMiddleDesc.Text, r.leftMiddleDesc.TextSize, r.leftMiddleDesc.TextStyle)
 	r.leftMiddleDesc.Move(fyne.NewPos(theme.Padding(), s.Height/3))
 	r.leftMiddleBox.Resize(fyne.NewSize(ts.Height, s.Height*0.75))
-	r.leftMiddleBox.Move(fyne.NewPos(theme.Padding(), s.Height*0.1))
+	r.leftMiddleBox.Move(fyne.NewPos(2*theme.Padding(), s.Height*0.1))
 
 	ts = fyne.MeasureText(r.rightMiddleDesc.Text, r.rightMiddleDesc.TextSize, r.rightMiddleDesc.TextStyle)
 	r.rightMiddleDesc.Move(fyne.NewPos((s.Width-ts.Width)-theme.Padding(), s.Height/3))
@@ -451,9 +486,12 @@ func (r *sknLineChartRenderer) Objects() []fyne.CanvasObject {
 		objs = append(objs, lbl)
 		objs = append(objs, r.xLabels[idx])
 	}
-	for _, lines := range r.dataPoints {
-		for _, line := range lines {
+	for key, lines := range r.dataPoints {
+		for idx, line := range lines {
 			objs = append(objs, line)
+			if r.widget.enableDataPointMarkers {
+				objs = append(objs, r.dataPointMarkers[key][idx])
+			}
 		}
 	}
 	return objs
@@ -469,12 +507,16 @@ func (r *sknLineChartRenderer) VerifyDataPoints() {
 	for key, points := range *r.widget.dataPoints {
 		if nil == r.dataPoints[key] {
 			r.dataPoints[key] = []*canvas.Line{}
+			r.dataPointMarkers[key] = []*canvas.Circle{}
 		}
 		for idx, point := range points {
 			if idx > (len(r.dataPoints[key]) - 1) {
 				x := canvas.NewLine(theme.PrimaryColorNamed(point.ColorName()))
 				x.StrokeWidth = 2.0
 				r.dataPoints[key] = append(r.dataPoints[key], x)
+				z := canvas.NewCircle(theme.PrimaryColorNamed(point.ColorName()))
+				z.StrokeWidth = 4.0
+				r.dataPointMarkers[key] = append(r.dataPointMarkers[key], z)
 			}
 		}
 	}

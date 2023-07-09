@@ -61,12 +61,14 @@ func main() {
 				time.Now().Format(time.RFC3339)))
 			time.Sleep(time.Second)
 		}
+		mw.EnableDataPointMarkers(true)
 	})()
 
 	err = mw.ApplyNewDataSeries("many", manyPoints)
 	if err != nil {
 		fmt.Println("ApplyNewDataSeries", err.Error())
 	}
+	mw.EnableDataPointMarkers(false)
 
 	w.Resize(fyne.NewSize(1024, 512))
 	w.SetContent(mw)
