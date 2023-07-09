@@ -15,13 +15,11 @@ import (
 	"strings"
 )
 
-// Widget code starts here
-//
-// A text widget with themed chartFrame and foreground
+// sknLineChart widget to display multiple series of data points
+// which will roll off older point beyond the 120 point limit.
 type sknLineChart struct {
 	widget.BaseWidget       // Inherit from BaseWidget
 	dataPoints              *map[string][]interfaces.SknDatapoint
-	dataPointColor          color.Color
 	dataPointScale          fyne.Size
 	dataPointLimit          int
 	enableDataPointMarkers  bool
@@ -44,7 +42,11 @@ type sknLineChart struct {
 
 var _ interfaces.SknLineChart = (*sknLineChart)(nil)
 
-// NewSknLineChart Create a Widget and Extend (initialize) the BaseWidget
+// NewSknLineChart Create the Line Chart
+// be careful not to exceed the series data point limit, which defaults to 120
+//
+// can return a valid chart object and an error object; errors really should be handled
+// and are caused by data points exceeding the container limit of 120; they will be truncated
 func NewSknLineChart(tTitle, bTitle string, dataPoints *map[string][]interfaces.SknDatapoint) (*sknLineChart, error) {
 	var err error
 	dpl := 120
@@ -62,7 +64,6 @@ func NewSknLineChart(tTitle, bTitle string, dataPoints *map[string][]interfaces.
 	w := &sknLineChart{ // Create this widget with an initial text value
 		dataPoints:              dataPoints,
 		dataPointLimit:          dpl,
-		dataPointColor:          theme.PrimaryColor(),
 		dataPointScale:          fyne.NewSize(120.0, 110.0),
 		enableDataPointMarkers:  true,
 		enableHorizGridLines:    true,
@@ -89,84 +90,134 @@ func NewSknLineChart(tTitle, bTitle string, dataPoints *map[string][]interfaces.
 func (w *sknLineChart) CreateRenderer() fyne.WidgetRenderer {
 	return newSknLineChartRenderer(w)
 }
+
+// SetMinSize override the default min size of chart
 func (w *sknLineChart) SetMinSize(s fyne.Size) {
 	w.minSize = s
 }
+
+// GetTopLeftDescription return text from top left label
 func (w *sknLineChart) GetTopLeftDescription() string {
 	return w.topLeftDesc
 }
+
+// GetTitle return text of the chart's title from top center
 func (w *sknLineChart) GetTitle() string {
 	return w.topCenteredDesc
 }
+
+// IsDataPointMarkersEnabled returns state of chart's use of data point markers on series data
 func (w *sknLineChart) IsDataPointMarkersEnabled() bool {
 	return w.enableDataPointMarkers
 }
+
+// IsHorizGridLinesEnabled returns state of chart's display of horizontal grid line
 func (w *sknLineChart) IsHorizGridLinesEnabled() bool {
 	return w.enableHorizGridLines
 }
+
+// IsVertGridLinesEnabled returns state of chart's display of vertical grid line
 func (w *sknLineChart) IsVertGridLinesEnabled() bool {
 	return w.enableVertGridLines
 }
+
+// IsMousePointDisplayEnabled return state of mouse popups when hovered over a chart datapoint
 func (w *sknLineChart) IsMousePointDisplayEnabled() bool {
 	return w.enableMousePointDisplay
 }
+
+// GetTopRightDescription returns text of top right label
 func (w *sknLineChart) GetTopRightDescription() string {
 	return w.topRightDesc
 }
+
+// GetMiddleLeftDescription returns text of middle left label
 func (w *sknLineChart) GetMiddleLeftDescription() string {
 	return w.leftMiddleDesc
 }
+
+// GetMiddleRightDescription returns text of middle right label
 func (w *sknLineChart) GetMiddleRightDescription() string {
 	return w.rightMiddleDesc
 }
+
+// GetBottomLeftDescription returns text of bottom left label
 func (w *sknLineChart) GetBottomLeftDescription() string {
 	return w.bottomLeftDesc
 }
+
+// GetBottomCenteredDescription returns text of bottom center label
 func (w *sknLineChart) GetBottomCenteredDescription() string {
 	return w.bottomCenteredDesc
 }
+
+// GetBottomRightDescription returns text of bottom right label
 func (w *sknLineChart) GetBottomRightDescription() string {
 	return w.bottomRightDesc
 }
+
+// SetTopLeftDescription sets text to be display on chart at top left
 func (w *sknLineChart) SetTopLeftDescription(newValue string) {
 	w.topLeftDesc = newValue
 }
+
+// SetTitle sets text to be display on chart at top center
 func (w *sknLineChart) SetTitle(newValue string) {
 	w.topCenteredDesc = newValue
 }
-func (w *sknLineChart) EnableDataPointMarkers(newValue bool) {
-	w.enableDataPointMarkers = newValue
-}
-func (w *sknLineChart) EnabledHorizGridLines(newValue bool) {
-	w.enableHorizGridLines = newValue
-}
-func (w *sknLineChart) EnableVertGridLine(newValue bool) {
-	w.enableVertGridLines = newValue
-}
-func (w *sknLineChart) EnableMousePointDisplay(newValue bool) {
-	w.enableMousePointDisplay = newValue
-}
+
+// SetTopRightDescription changes displayed text, empty disables display
 func (w *sknLineChart) SetTopRightDescription(newValue string) {
 	w.topRightDesc = newValue
 }
+
+// SetMiddleLeftDescription changes displayed text, empty disables display
 func (w *sknLineChart) SetMiddleLeftDescription(newValue string) {
 	w.leftMiddleDesc = newValue
 }
+
+// SetMiddleRightDescription changes displayed text, empty disables display
 func (w *sknLineChart) SetMiddleRightDescription(newValue string) {
 	w.rightMiddleDesc = newValue
 }
+
+// SetBottomLeftDescription changes displayed text, empty disables display
 func (w *sknLineChart) SetBottomLeftDescription(newValue string) {
 	w.bottomLeftDesc = newValue
 }
+
+// SetBottomRightDescription changes displayed text, empty disables display
 func (w *sknLineChart) SetBottomRightDescription(newValue string) {
 	w.bottomRightDesc = newValue
 }
+
+// SetBottomCenteredDescription changes displayed text, empty disables display
 func (w *sknLineChart) SetBottomCenteredDescription(newValue string) {
 	w.bottomCenteredDesc = newValue
 }
-func (w *sknLineChart) SetDataSeriesColor(c color.Color) {
-	w.dataPointColor = c
+
+// EnableDataPointMarkers enables data point markers on display series points
+func (w *sknLineChart) EnableDataPointMarkers(newValue bool) {
+	w.enableDataPointMarkers = newValue
 }
+
+// EnabledHorizGridLines enables chart horizontal grid lines
+func (w *sknLineChart) EnabledHorizGridLines(newValue bool) {
+	w.enableHorizGridLines = newValue
+}
+
+// EnableVertGridLine enables chart vertical grid lines
+func (w *sknLineChart) EnableVertGridLine(newValue bool) {
+	w.enableVertGridLines = newValue
+}
+
+// EnableMousePointDisplay true/false, enables data point display under mouse pointer
+func (w *sknLineChart) EnableMousePointDisplay(newValue bool) {
+	w.enableMousePointDisplay = newValue
+}
+
+// ReplaceDataSeries replaces all the chart's series data
+// throws an error if any series exceeds the container limit
 func (w *sknLineChart) ReplaceDataSeries(newData *map[string][]interfaces.SknDatapoint) error {
 	if w.dataPoints == nil {
 		return fmt.Errorf("ReplaceDataSeries() no active widget")
@@ -184,6 +235,9 @@ func (w *sknLineChart) ReplaceDataSeries(newData *map[string][]interfaces.SknDat
 	}
 	return nil
 }
+
+// ApplyNewDataSeries adds a new series of data to existing chart set.
+// throws error if new series exceeds containers point limit
 func (w *sknLineChart) ApplyNewDataSeries(seriesName string, newSeries []interfaces.SknDatapoint) error {
 	if w == nil {
 		return fmt.Errorf("ApplyNewDataSeries() no active widget")
@@ -197,6 +251,9 @@ func (w *sknLineChart) ApplyNewDataSeries(seriesName string, newSeries []interfa
 	}
 	return nil
 }
+
+// ApplySingleDataPoint adds a new datapoint to an existing series
+// will shift out the oldest point if containers limit is exceeded
 func (w *sknLineChart) ApplySingleDataPoint(seriesName string, newDataPoint interfaces.SknDatapoint) {
 	if w == nil {
 		return
@@ -208,9 +265,13 @@ func (w *sknLineChart) ApplySingleDataPoint(seriesName string, newDataPoint inte
 	}
 	w.Refresh()
 }
-func (w *sknLineChart) MouseIn(me *desktop.MouseEvent) {
+
+// MouseIn unused interface method
+func (w *sknLineChart) MouseIn(*desktop.MouseEvent) {
 
 }
+
+// MouseMoved interface method to discover which data point is under mouse
 func (w *sknLineChart) MouseMoved(me *desktop.MouseEvent) {
 	if !w.enableMousePointDisplay {
 		return
@@ -228,19 +289,26 @@ func (w *sknLineChart) MouseMoved(me *desktop.MouseEvent) {
 		}
 	}
 }
+
+// MouseOut disable display of mouse data point display
 func (w *sknLineChart) MouseOut() {
 	w.disableMouseContainer()
 }
+
+// enableMouseContainer private method to prepare values need by renderer to create pop display
+// composes display text, captures position and colorName for use by renderer
 func (w *sknLineChart) enableMouseContainer(value, frameColor string, mousePosition *fyne.Position) *sknLineChart {
 	w.mouseDisplayStr = value
 	w.mouseDisplayFrameColor = frameColor
 	ct := canvas.NewText(value, theme.PrimaryColorNamed(frameColor))
 	ts := fyne.MeasureText(ct.Text, ct.TextSize, ct.TextStyle)
-	mp := &fyne.Position{X: mousePosition.X - (ts.Width / 2), Y: mousePosition.Y - 30}
+	mp := &fyne.Position{X: mousePosition.X - (ts.Width / 2), Y: mousePosition.Y - ts.Height - theme.Padding()}
 	w.mouseDisplayPosition = mp
-	fmt.Println(value)
 	return w
 }
+
+// disableMouseContainer private method to manage mouse leaving window
+// blank string will prevent display
 func (w *sknLineChart) disableMouseContainer() {
 	w.mouseDisplayStr = ""
 }
@@ -269,9 +337,9 @@ type sknLineChartRenderer struct {
 }
 
 // Create the renderer with a reference to the widget
-// Note: The chartFrame and foreground colours are set from the current theme.
+// and all the objects to be displayed for this custom widget
 //
-// Do not size or move canvas objects here.
+// Note: Do not size or move canvas objects here.
 func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 	background := canvas.NewRectangle(color.Transparent)
 	background.StrokeWidth = 0.75
@@ -287,18 +355,19 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 	}
 	mouseDisplay := container.NewPadded(
 		border,
-		legend)
+		legend,
+	)
 
 	dataPoints := map[string][]*canvas.Line{}
-	xlines := []*canvas.Line{}
-	ylines := []*canvas.Line{}
-	xLabels := []*canvas.Text{}
-	yLabels := []*canvas.Text{}
 	dpMaker := map[string][]*canvas.Circle{}
-	xl := canvas.NewText("110", theme.ForegroundColor())
+	var xlines, ylines []*canvas.Line
+	var xLabels, yLabels []*canvas.Text
+
+	xl := canvas.NewText("110", theme.ForegroundColor()) // fix scaling ticks miss
 	yl := canvas.NewText("120", theme.ForegroundColor())
 	xLabels = append(xLabels, xl) // x12
 	yLabels = append(yLabels, yl) // x13 hi-jacked
+
 	for i := 0; i < 11; i++ {
 		x := canvas.NewLine(theme.PrimaryColorNamed(theme.ColorGreen))
 		x.StrokeWidth = 0.25
@@ -315,7 +384,6 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 	}
 
 	for key, points := range *lineChart.dataPoints {
-		// color
 		for _, point := range points {
 			x := canvas.NewLine(theme.PrimaryColorNamed(point.ColorName()))
 			x.StrokeWidth = 2.0
@@ -333,19 +401,24 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 		Italic: false,
 	}
 	bottomCenteredDesc := canvas.NewText(lineChart.bottomCenteredDesc, theme.ForegroundColor())
-	bottomCenteredDesc.TextSize = 14
+	bottomCenteredDesc.TextSize = 16
 	bottomCenteredDesc.TextStyle = fyne.TextStyle{
 		Bold:   false,
 		Italic: true,
 	}
 
+	// vertical text for X/Y legends since no text rotation is available
 	lBox := container.NewVBox()
 	for _, c := range lineChart.leftMiddleDesc {
-		lBox.Add(canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground))))
+		lBox.Add(
+			canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground))),
+		)
 	}
 	rBox := container.NewVBox()
 	for _, c := range lineChart.rightMiddleDesc {
-		rBox.Add(canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground))))
+		rBox.Add(
+			canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground))),
+		)
 	}
 
 	return &sknLineChartRenderer{
@@ -371,8 +444,6 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 
 // Refresh method is called if the state of the widget changes or the
 // theme is changed
-//
-// Note: The chartFrame and foreground colours are set from the current theme
 func (r *sknLineChartRenderer) Refresh() {
 	r.VerifyDataPoints()
 
@@ -385,7 +456,7 @@ func (r *sknLineChartRenderer) Refresh() {
 		xlbl.Refresh()
 		r.yLabels[idx].Refresh()
 	}
-	for key, lines := range r.dataPoints { // data points
+	for key, lines := range r.dataPoints { // data points, and markers
 		for idx, point := range lines {
 			point.Refresh()
 			r.dataPointMarkers[key][idx].Refresh()
@@ -395,6 +466,7 @@ func (r *sknLineChartRenderer) Refresh() {
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
 	r.mouseDisplayContainer.Objects[1].(*canvas.Text).Text = r.widget.mouseDisplayStr
 	r.mouseDisplayContainer.Refresh()
+
 	r.topLeftDesc.Text = r.widget.topLeftDesc
 	r.topCenteredDesc.Text = r.widget.topCenteredDesc
 	r.topRightDesc.Text = r.widget.topRightDesc
@@ -404,13 +476,17 @@ func (r *sknLineChartRenderer) Refresh() {
 
 	r.leftMiddleBox.RemoveAll()
 	for _, c := range r.widget.leftMiddleDesc {
-		z := canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground)))
+		z := canvas.NewText(
+			strings.ToUpper(string(c)),
+			theme.PrimaryColorNamed(string(theme.ColorNameForeground)))
 		z.TextSize = 14
 		r.leftMiddleBox.Add(z)
 	}
 	r.rightMiddleBox.RemoveAll()
 	for _, c := range r.widget.rightMiddleDesc {
-		z := canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground)))
+		z := canvas.NewText(
+			strings.ToUpper(string(c)),
+			theme.PrimaryColorNamed(string(theme.ColorNameForeground)))
 		z.TextSize = 14
 		r.rightMiddleBox.Add(z)
 	}
@@ -418,13 +494,14 @@ func (r *sknLineChartRenderer) Refresh() {
 	r.topLeftDesc.Refresh()
 	r.topCenteredDesc.Refresh()
 	r.topRightDesc.Refresh()
-	r.bottomCenteredDesc.Refresh()
+
 	r.bottomLeftDesc.Refresh()
+	r.bottomCenteredDesc.Refresh()
 	r.bottomRightDesc.Refresh()
 }
 
-// Layout Given the size required by the fyne application move and re-size the
-// canvas objects.
+// Layout Given the size required by the fyne application
+// move and re-size the all custom widget canvas objects here
 func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 	r.xInc = (s.Width - theme.Padding()) / 14.0
 	r.yInc = (s.Height - theme.Padding()) / 14.0
@@ -495,6 +572,7 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 			r.dataPoints[key][idx].Position2 = lastPoint
 			r.dataPoints[key][idx].Refresh()
 			lastPoint = thisPoint
+
 			zt := fyne.NewPos(thisPoint.X-2, thisPoint.Y-2)
 			r.dataPointMarkers[key][idx].Position1 = zt
 			zb := fyne.NewPos(thisPoint.X+2, thisPoint.Y+2)
@@ -508,14 +586,23 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 	r.chartFrame.Resize(fyne.NewSize(r.xInc*12, r.yInc*11))
 	r.chartFrame.Move(fyne.NewPos(r.xInc, r.yInc))
 
-	ts := fyne.MeasureText(r.topCenteredDesc.Text, r.topCenteredDesc.TextSize, r.topCenteredDesc.TextStyle)
+	ts := fyne.MeasureText(
+		r.topCenteredDesc.Text,
+		r.topCenteredDesc.TextSize,
+		r.topCenteredDesc.TextStyle)
 	r.topCenteredDesc.Move(fyne.Position{X: (s.Width - ts.Width) / 2, Y: theme.Padding() / 4})
 
-	ts = fyne.MeasureText(r.topRightDesc.Text, r.topRightDesc.TextSize, r.topRightDesc.TextStyle)
+	ts = fyne.MeasureText(
+		r.topRightDesc.Text,
+		r.topRightDesc.TextSize,
+		r.topRightDesc.TextStyle)
 	r.topRightDesc.Move(fyne.Position{X: (s.Width - ts.Width) - theme.Padding(), Y: ts.Height / 4})
 	r.topLeftDesc.Move(fyne.NewPos(theme.Padding(), ts.Height/4))
 
-	ts = fyne.MeasureText(r.mouseDisplayContainer.Objects[1].(*canvas.Text).Text, r.mouseDisplayContainer.Objects[1].(*canvas.Text).TextSize, r.mouseDisplayContainer.Objects[1].(*canvas.Text).TextStyle)
+	ts = fyne.MeasureText(
+		r.mouseDisplayContainer.Objects[1].(*canvas.Text).Text,
+		r.mouseDisplayContainer.Objects[1].(*canvas.Text).TextSize,
+		r.mouseDisplayContainer.Objects[1].(*canvas.Text).TextStyle)
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).Resize(fyne.NewSize(ts.Width+theme.Padding(), ts.Height))
 	r.mouseDisplayContainer.Move(*r.widget.mouseDisplayPosition)
 
@@ -525,22 +612,29 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 	r.rightMiddleBox.Resize(fyne.NewSize(ts.Height, s.Height*0.75))
 	r.rightMiddleBox.Move(fyne.NewPos(s.Width-ts.Height, s.Height*0.1))
 
-	ts = fyne.MeasureText(r.bottomCenteredDesc.Text, r.bottomCenteredDesc.TextSize, r.bottomCenteredDesc.TextStyle)
+	ts = fyne.MeasureText(
+		r.bottomCenteredDesc.Text,
+		r.bottomCenteredDesc.TextSize,
+		r.bottomCenteredDesc.TextStyle)
 	r.bottomCenteredDesc.Move(fyne.Position{X: (s.Width - ts.Width) / 2, Y: s.Height - ts.Height - theme.Padding()})
 
-	ts = fyne.MeasureText(r.bottomRightDesc.Text, r.bottomRightDesc.TextSize, r.bottomRightDesc.TextStyle)
+	ts = fyne.MeasureText(
+		r.bottomRightDesc.Text,
+		r.bottomRightDesc.TextSize,
+		r.bottomRightDesc.TextStyle)
 	r.bottomRightDesc.Move(fyne.NewPos((s.Width-ts.Width)-theme.Padding(), s.Height-ts.Height-theme.Padding()))
 	r.bottomLeftDesc.Move(fyne.NewPos(theme.Padding()+2.0, s.Height-ts.Height-theme.Padding()))
 
 }
 
 // MinSize Create a minimum size for the widget.
-// The smallest size is the size of the text with a border defined by the theme padding
+// The smallest size is can be overridden by user
 func (r *sknLineChartRenderer) MinSize() fyne.Size {
 	return r.widget.minSize
 }
 
 // Objects Return a list of each canvas object.
+// but only the objects that have been enabled or are not at default value; i.e. ""
 func (r *sknLineChartRenderer) Objects() []fyne.CanvasObject {
 	objs := []fyne.CanvasObject{
 		r.chartFrame,
@@ -598,9 +692,8 @@ func (r *sknLineChartRenderer) Objects() []fyne.CanvasObject {
 // Destroy Cleanup if resources have been allocated
 func (r *sknLineChartRenderer) Destroy() {}
 
-// VerifyDataPoints
-//
-// Renderer method to inject newly add data series or points
+// VerifyDataPoints Renderer method to inject newly add data series or points
+// called by Refresh() to ensure new data is recognized
 func (r *sknLineChartRenderer) VerifyDataPoints() {
 	for key, points := range *r.widget.dataPoints {
 		if nil == r.dataPoints[key] {
@@ -608,7 +701,7 @@ func (r *sknLineChartRenderer) VerifyDataPoints() {
 			r.dataPointMarkers[key] = []*canvas.Circle{}
 		}
 		for idx, point := range points {
-			if idx > (len(r.dataPoints[key]) - 1) {
+			if idx > (len(r.dataPoints[key]) - 1) { // add added points
 				x := canvas.NewLine(theme.PrimaryColorNamed(point.ColorName()))
 				x.StrokeWidth = 2.0
 				r.dataPoints[key] = append(r.dataPoints[key], x)

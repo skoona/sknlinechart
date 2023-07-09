@@ -20,9 +20,9 @@ func main() {
 	w := gui.NewWindow("Custom Widget Development")
 
 	dataPoints := map[string][]interfaces.SknDatapoint{} // legend, points
-	points := []interfaces.SknDatapoint{}
-	morePoints := []interfaces.SknDatapoint{}
-	manyPoints := []interfaces.SknDatapoint{}
+	var points []interfaces.SknDatapoint
+	var morePoints []interfaces.SknDatapoint
+	var manyPoints []interfaces.SknDatapoint
 	rand.NewSource(25.0)
 	for x := 1; x < 50; x++ {
 		points = append(points, entities.NewSknDatapoint(
