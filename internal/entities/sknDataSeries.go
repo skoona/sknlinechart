@@ -15,21 +15,21 @@ func NewSknDataSeries(value float32, colorName, timestamp string) interfaces.Skn
 		timestamp: timestamp,
 	}
 }
-func (d sknDataSeries) Value() float32 {
+func (d *sknDataSeries) Value() float32 {
 	return d.value
 }
-func (d sknDataSeries) ColorName() string {
+func (d *sknDataSeries) ColorName() string {
 	return d.colorName
 }
-func (d sknDataSeries) Timestamp() string {
+func (d *sknDataSeries) Timestamp() string {
 	return d.timestamp
 }
-func (d sknDataSeries) SetValue(v float32) {
-	d.value = v
+func (d *sknDataSeries) SetValue(v float32) {
+	(*d).value = v
 }
-func (d sknDataSeries) SetColorName(n string) {
-	d.colorName = n
+func (d *sknDataSeries) SetColorName(n string) {
+	(*d).colorName = n
 }
-func (d sknDataSeries) SetTimestamp(t string) {
-	d.timestamp = t
+func (d *sknDataSeries) SetTimestamp(t string) {
+	(*d).timestamp = t
 }

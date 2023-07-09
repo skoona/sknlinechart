@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"ggApcMon/internal/commons"
 	"ggApcMon/internal/interfaces"
 	"image/color"
 	"strconv"
+	"strings"
 )
 
 // Widget code starts here
@@ -40,10 +42,11 @@ func NewSknLineChart(title, xScale, yScale string, dataPoints *map[string][]inte
 	dpl := 120
 	for key, points := range *dataPoints {
 		if len(points) > dpl {
-			err = fmt.Errorf("NewSknLineChart() dataPoint contents exceeds the point count limit[Action: truncated leading]. Series: %s, points: %d, Limit: %d", key, len(points), dpl)
+			err = fmt.Errorf("%s\nNewSknLineChart() dataPoint contents exceeds the point count limit[Action: truncated leading]. Series: %s, points: %d, Limit: %d", err, key, len(points), dpl)
 			for len(points) > dpl {
 				points = commons.RemoveIndexFromSlice(0, points)
 			}
+			(*dataPoints)[key] = points
 			err = fmt.Errorf("%s\n NewSknLineChart() dataPoint contents exceeds the point count limit[Action: truncated leading]. Series: %s, points: %d, Limit: %d", err.Error(), key, len(points), dpl)
 		}
 	}
@@ -193,6 +196,8 @@ type sknLineChartRenderer struct {
 	bottomCenteredDesc *canvas.Text
 	bottomLeftDesc     *canvas.Text
 	bottomRightDesc    *canvas.Text
+	leftMiddleBox      *fyne.Container
+	rightMiddleBox     *fyne.Container
 }
 
 // Create the renderer with a reference to the widget
@@ -255,6 +260,15 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 	rightMiddleDesc := canvas.NewText(lineChart.rightMiddleDesc, theme.ForegroundColor())
 	rightMiddleDesc.TextSize = 18
 
+	lBox := container.NewVBox()
+	for _, c := range lineChart.leftMiddleDesc {
+		lBox.Add(canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground))))
+	}
+	rBox := container.NewVBox()
+	for _, c := range lineChart.rightMiddleDesc {
+		rBox.Add(canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground))))
+	}
+
 	return &sknLineChartRenderer{
 		widget:             lineChart,
 		background:         background,
@@ -271,6 +285,8 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 		bottomLeftDesc:     canvas.NewText(lineChart.bottomLeftDesc, theme.ForegroundColor()),
 		bottomCenteredDesc: bottomCenteredDesc,
 		bottomRightDesc:    canvas.NewText(lineChart.bottomRightDesc, theme.ForegroundColor()),
+		leftMiddleBox:      lBox,
+		rightMiddleBox:     rBox,
 	}
 }
 
@@ -394,9 +410,15 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 	r.topRightDesc.Move(fyne.Position{X: (s.Width - ts.Width) - theme.Padding(), Y: ts.Height / 4})
 	r.topLeftDesc.Move(fyne.NewPos(theme.Padding(), ts.Height/4))
 
+	ts = fyne.MeasureText(r.leftMiddleDesc.Text, r.leftMiddleDesc.TextSize, r.leftMiddleDesc.TextStyle)
 	r.leftMiddleDesc.Move(fyne.NewPos(theme.Padding(), s.Height/3))
+	r.leftMiddleBox.Resize(fyne.NewSize(ts.Height, s.Height*0.75))
+	r.leftMiddleBox.Move(fyne.NewPos(theme.Padding(), s.Height*0.1))
+
 	ts = fyne.MeasureText(r.rightMiddleDesc.Text, r.rightMiddleDesc.TextSize, r.rightMiddleDesc.TextStyle)
 	r.rightMiddleDesc.Move(fyne.NewPos((s.Width-ts.Width)-theme.Padding(), s.Height/3))
+	r.rightMiddleBox.Resize(fyne.NewSize(ts.Height, s.Height*0.75))
+	r.rightMiddleBox.Move(fyne.NewPos((s.Width - ts.Height), s.Height*0.1))
 
 	ts = fyne.MeasureText(r.bottomCenteredDesc.Text, r.bottomCenteredDesc.TextSize, r.bottomCenteredDesc.TextStyle)
 	r.bottomCenteredDesc.Move(fyne.Position{X: (s.Width - ts.Width) / 2, Y: s.Height - ts.Height - theme.Padding()})
@@ -418,7 +440,7 @@ func (r *sknLineChartRenderer) Objects() []fyne.CanvasObject {
 	objs := []fyne.CanvasObject{
 		r.background,
 		r.topLeftDesc, r.topCenteredDesc, r.topRightDesc,
-		r.leftMiddleDesc, r.rightMiddleDesc,
+		r.leftMiddleBox, r.rightMiddleBox,
 		r.bottomLeftDesc, r.bottomCenteredDesc, r.bottomRightDesc,
 	}
 	for idx, line := range r.xLines {

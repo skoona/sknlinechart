@@ -27,7 +27,7 @@ func main() {
 	for x := 1; x < 50; x++ {
 		points = append(points, entities.NewSknDataSeries(
 			rand.Float32()*25.0,
-			theme.ColorYellow,
+			theme.ColorOrange,
 			time.Now().Format(time.RFC3339)))
 	}
 	rand.NewSource(50.0)
@@ -53,10 +53,16 @@ func main() {
 		fmt.Println(err.Error())
 	}
 
-	for _, point := range morePoints {
-		point.SetColorName(theme.ColorYellow)
-		mw.ApplySingleDataPoint("first", point)
-	}
+	go (func() {
+		for i := 0; i < 60; i++ {
+			mw.ApplySingleDataPoint("steady", entities.NewSknDataSeries(
+				89.0,
+				theme.ColorYellow,
+				time.Now().Format(time.RFC3339)))
+			time.Sleep(time.Second)
+		}
+	})()
+
 	err = mw.ApplyNewDataSeries("many", manyPoints)
 	if err != nil {
 		fmt.Println("ApplyNewDataSeries", err.Error())
