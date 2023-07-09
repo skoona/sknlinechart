@@ -1,10 +1,10 @@
 package interfaces
 
 type SknDataSeries interface {
-	XValue() float32
-	YValue() float32
+	Value() float32
 	Timestamp() string
-	SetXValue(x float32)
-	SetYValue(y float32)
+	ColorName() string
+	SetValue(y float32)
+	SetColorName(n string)
 	SetTimestamp(t string)
 }

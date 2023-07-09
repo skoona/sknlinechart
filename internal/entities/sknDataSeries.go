@@ -3,32 +3,32 @@ package entities
 import "ggApcMon/internal/interfaces"
 
 type sknDataSeries struct {
-	xValue    float32
-	yValue    float32
+	value     float32
+	colorName string
 	timestamp string
 }
 
-func NewSknDataSeries(xValue, yValue float32, timestamp string) interfaces.SknDataSeries {
+func NewSknDataSeries(value float32, colorName, timestamp string) interfaces.SknDataSeries {
 	return &sknDataSeries{
-		xValue:    xValue,
-		yValue:    yValue,
+		value:     value,
+		colorName: colorName,
 		timestamp: timestamp,
 	}
 }
-func (d sknDataSeries) YValue() float32 {
-	return d.yValue
+func (d sknDataSeries) Value() float32 {
+	return d.value
 }
-func (d sknDataSeries) XValue() float32 {
-	return d.xValue
+func (d sknDataSeries) ColorName() string {
+	return d.colorName
 }
 func (d sknDataSeries) Timestamp() string {
 	return d.timestamp
 }
-func (d sknDataSeries) SetYValue(y float32) {
-	d.yValue = y
+func (d sknDataSeries) SetValue(v float32) {
+	d.value = v
 }
-func (d sknDataSeries) SetXValue(x float32) {
-	d.xValue = x
+func (d sknDataSeries) SetColorName(n string) {
+	d.colorName = n
 }
 func (d sknDataSeries) SetTimestamp(t string) {
 	d.timestamp = t

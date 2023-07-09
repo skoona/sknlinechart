@@ -1,6 +1,9 @@
 package interfaces
 
-import "image/color"
+import (
+	"fyne.io/fyne/v2"
+	"image/color"
+)
 
 type SknLineChart interface {
 	GetTopLeftDescription() string
@@ -13,6 +16,7 @@ type SknLineChart interface {
 	GetBottomRightDescription() string
 	SetTopLeftDescription(newValue string)
 	SetTitle(newValue string)
+	SetMinSize(s fyne.Size)
 	SetTopRightDescription(newValue string)
 	SetMiddleLeftDescription(newValue string)
 	SetMiddleRightDescription(newValue string)
@@ -20,5 +24,7 @@ type SknLineChart interface {
 	SetBottomRightDescription(newValue string)
 	SetBottomCenteredDescription(newValue string)
 	SetDataSeriesColor(c color.Color)
-	UpdateDataSeries(newData []SknDataSeries)
+	ReplaceDataSeries(newData *map[string][]SknDataSeries) error
+	ApplyNewDataSeries(seriesName string, newSeries []SknDataSeries) error
+	ApplySingleDataPoint(seriesName string, newDataPoint SknDataSeries)
 }

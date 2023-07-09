@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/theme"
 	"ggApcMon/internal/entities"
 	"ggApcMon/internal/interfaces"
 	"ggApcMon/internal/views/components"
@@ -18,16 +19,49 @@ func main() {
 	gui := app.NewWithID("net.skoona.mq2influx")
 	w := gui.NewWindow("Custom Widget Development")
 
+	dataPoints := map[string][]interfaces.SknDataSeries{} // legend, points
 	points := []interfaces.SknDataSeries{}
-	rand.NewSource(100.0)
-
+	morePoints := []interfaces.SknDataSeries{}
+	manyPoints := []interfaces.SknDataSeries{}
+	rand.NewSource(25.0)
+	for x := 1; x < 50; x++ {
+		points = append(points, entities.NewSknDataSeries(
+			rand.Float32()*25.0,
+			theme.ColorYellow,
+			time.Now().Format(time.RFC3339)))
+	}
+	rand.NewSource(50.0)
+	for x := 1; x < 125; x++ {
+		morePoints = append(morePoints, entities.NewSknDataSeries(
+			rand.Float32()*50.0,
+			theme.ColorRed,
+			time.Now().Format(time.RFC3339)))
+	}
+	rand.NewSource(75.0)
 	for x := 1; x < 120; x++ {
-		points = append(points, entities.NewSknDataSeries(float32(x),
-			rand.Float32()*100.0,
+		manyPoints = append(manyPoints, entities.NewSknDataSeries(
+			rand.Float32()*75.0,
+			theme.ColorPurple,
 			time.Now().Format(time.RFC3339)))
 	}
 
-	mw := components.NewSknLineChart("ggApcMon", "Time Series", "Temperature", points)
+	dataPoints["first"] = points
+	dataPoints["second"] = morePoints
+
+	mw, err := components.NewSknLineChart("ggApcMon", "Time Series", "Temperature", &dataPoints)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	for _, point := range morePoints {
+		point.SetColorName(theme.ColorYellow)
+		mw.ApplySingleDataPoint("first", point)
+	}
+	err = mw.ApplyNewDataSeries("many", manyPoints)
+	if err != nil {
+		fmt.Println("ApplyNewDataSeries", err.Error())
+	}
+
 	w.Resize(fyne.NewSize(1024, 512))
 	w.SetContent(mw)
 
