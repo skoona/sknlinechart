@@ -30,6 +30,7 @@ type sknLineChart struct {
 	enableMousePointDisplay bool
 	mouseDisplayStr         string
 	mouseDisplayPosition    *fyne.Position
+	mouseDisplayFrameColor  string
 	topLeftDesc             string // The text to display in the widget
 	topCenteredDesc         string
 	topRightDesc            string
@@ -69,6 +70,7 @@ func NewSknLineChart(tTitle, bTitle string, dataPoints *map[string][]interfaces.
 		enableMousePointDisplay: true,
 		mouseDisplayStr:         "",
 		mouseDisplayPosition:    &fyne.Position{},
+		mouseDisplayFrameColor:  string(theme.ColorNameForeground),
 		topLeftDesc:             "top left desc",
 		topCenteredDesc:         tTitle,
 		topRightDesc:            "",
@@ -219,10 +221,8 @@ func (w *sknLineChart) MouseMoved(me *desktop.MouseEvent) {
 			if !me.Position.IsZero() && !top.IsZero() {
 				if me.Position.X >= top.X && me.Position.X <= bottom.X &&
 					me.Position.Y >= top.Y && me.Position.Y <= bottom.Y {
-					value := fmt.Sprint("Match Series: ", key, ", Index: ", idx, ", Color: ", point.ColorName(), ", Value: ", point.Value())
-					w.enableMouseContainer(value, &me.Position).Refresh()
-				} else {
-					w.disableMouseContainer()
+					value := fmt.Sprint(" Series: ", key, ", Index: ", idx, ", Value: ", point.Value())
+					w.enableMouseContainer(value, point.ColorName(), &me.Position).Refresh()
 				}
 			}
 		}
@@ -231,9 +231,12 @@ func (w *sknLineChart) MouseMoved(me *desktop.MouseEvent) {
 func (w *sknLineChart) MouseOut() {
 	w.disableMouseContainer()
 }
-func (w *sknLineChart) enableMouseContainer(value string, mousePosition *fyne.Position) *sknLineChart {
+func (w *sknLineChart) enableMouseContainer(value, frameColor string, mousePosition *fyne.Position) *sknLineChart {
 	w.mouseDisplayStr = value
-	mp := &fyne.Position{X: mousePosition.X - 20, Y: mousePosition.Y - 20}
+	w.mouseDisplayFrameColor = frameColor
+	ct := canvas.NewText(value, theme.PrimaryColorNamed(frameColor))
+	ts := fyne.MeasureText(ct.Text, ct.TextSize, ct.TextStyle)
+	mp := &fyne.Position{X: mousePosition.X - (ts.Width / 2), Y: mousePosition.Y - 30}
 	w.mouseDisplayPosition = mp
 	fmt.Println(value)
 	return w
@@ -274,7 +277,17 @@ func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
 	background.StrokeWidth = 0.75
 	background.StrokeColor = theme.PrimaryColorNamed(theme.ColorBlue)
 
-	mouseDisplay := container.NewPadded(canvas.NewText("", theme.ForegroundColor()))
+	border := canvas.NewRectangle(theme.OverlayBackgroundColor())
+	border.StrokeColor = theme.PrimaryColorNamed(lineChart.mouseDisplayFrameColor)
+	border.StrokeWidth = 2.0
+	legend := canvas.NewText("", theme.ForegroundColor())
+	legend.TextStyle = fyne.TextStyle{
+		Bold:      true,
+		Monospace: false,
+	}
+	mouseDisplay := container.NewPadded(
+		border,
+		legend)
 
 	dataPoints := map[string][]*canvas.Line{}
 	xlines := []*canvas.Line{}
@@ -379,7 +392,8 @@ func (r *sknLineChartRenderer) Refresh() {
 		}
 	}
 
-	r.mouseDisplayContainer.Objects[0].(*canvas.Text).Text = r.widget.mouseDisplayStr
+	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
+	r.mouseDisplayContainer.Objects[1].(*canvas.Text).Text = r.widget.mouseDisplayStr
 	r.mouseDisplayContainer.Refresh()
 	r.topLeftDesc.Text = r.widget.topLeftDesc
 	r.topCenteredDesc.Text = r.widget.topCenteredDesc
@@ -501,6 +515,8 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 	r.topRightDesc.Move(fyne.Position{X: (s.Width - ts.Width) - theme.Padding(), Y: ts.Height / 4})
 	r.topLeftDesc.Move(fyne.NewPos(theme.Padding(), ts.Height/4))
 
+	ts = fyne.MeasureText(r.mouseDisplayContainer.Objects[1].(*canvas.Text).Text, r.mouseDisplayContainer.Objects[1].(*canvas.Text).TextSize, r.mouseDisplayContainer.Objects[1].(*canvas.Text).TextStyle)
+	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).Resize(fyne.NewSize(ts.Width+theme.Padding(), ts.Height))
 	r.mouseDisplayContainer.Move(*r.widget.mouseDisplayPosition)
 
 	r.leftMiddleBox.Resize(fyne.NewSize(ts.Height, s.Height*0.75))
@@ -553,9 +569,6 @@ func (r *sknLineChartRenderer) Objects() []fyne.CanvasObject {
 	if r.bottomRightDesc.Text != "" {
 		objs = append(objs, r.bottomRightDesc)
 	}
-	if r.mouseDisplayContainer.Objects[0].(*canvas.Text).Text != "" {
-		objs = append(objs, r.mouseDisplayContainer)
-	}
 	for idx, line := range r.xLines {
 		if r.widget.enableHorizGridLines {
 			objs = append(objs, line)
@@ -575,6 +588,9 @@ func (r *sknLineChartRenderer) Objects() []fyne.CanvasObject {
 				objs = append(objs, r.dataPointMarkers[key][idx])
 			}
 		}
+	}
+	if r.mouseDisplayContainer.Objects[1].(*canvas.Text).Text != "" {
+		objs = append(objs, r.mouseDisplayContainer)
 	}
 	return objs
 }
