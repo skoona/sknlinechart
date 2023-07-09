@@ -19,27 +19,27 @@ func main() {
 	gui := app.NewWithID("net.skoona.mq2influx")
 	w := gui.NewWindow("Custom Widget Development")
 
-	dataPoints := map[string][]interfaces.SknDataSeries{} // legend, points
-	points := []interfaces.SknDataSeries{}
-	morePoints := []interfaces.SknDataSeries{}
-	manyPoints := []interfaces.SknDataSeries{}
+	dataPoints := map[string][]interfaces.SknDatapoint{} // legend, points
+	points := []interfaces.SknDatapoint{}
+	morePoints := []interfaces.SknDatapoint{}
+	manyPoints := []interfaces.SknDatapoint{}
 	rand.NewSource(25.0)
 	for x := 1; x < 50; x++ {
-		points = append(points, entities.NewSknDataSeries(
+		points = append(points, entities.NewSknDatapoint(
 			rand.Float32()*25.0,
 			theme.ColorOrange,
 			time.Now().Format(time.RFC3339)))
 	}
 	rand.NewSource(50.0)
 	for x := 1; x < 125; x++ {
-		morePoints = append(morePoints, entities.NewSknDataSeries(
+		morePoints = append(morePoints, entities.NewSknDatapoint(
 			rand.Float32()*50.0,
 			theme.ColorRed,
 			time.Now().Format(time.RFC3339)))
 	}
 	rand.NewSource(75.0)
 	for x := 1; x < 120; x++ {
-		manyPoints = append(manyPoints, entities.NewSknDataSeries(
+		manyPoints = append(manyPoints, entities.NewSknDatapoint(
 			rand.Float32()*75.0,
 			theme.ColorPurple,
 			time.Now().Format(time.RFC3339)))
@@ -48,14 +48,14 @@ func main() {
 	dataPoints["first"] = points
 	dataPoints["second"] = morePoints
 
-	mw, err := components.NewSknLineChart("ggApcMon", "Time Series", "Temperature", &dataPoints)
+	mw, err := components.NewSknLineChart("ggApcMon", "Time Series", &dataPoints)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
 	go (func() {
 		for i := 0; i < 60; i++ {
-			mw.ApplySingleDataPoint("steady", entities.NewSknDataSeries(
+			mw.ApplySingleDataPoint("steady", entities.NewSknDatapoint(
 				89.0,
 				theme.ColorYellow,
 				time.Now().Format(time.RFC3339)))

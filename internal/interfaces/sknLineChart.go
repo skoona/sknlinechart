@@ -2,12 +2,20 @@ package interfaces
 
 import (
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/driver/desktop"
 	"image/color"
 )
 
 type SknLineChart interface {
+	desktop.Hoverable
 	IsDataPointMarkersEnabled() bool
+	IsHorizGridLinesEnabled() bool
+	IsVertGridLinesEnabled() bool
+	IsMousePointDisplayEnabled() bool
 	EnableDataPointMarkers(newValue bool)
+	EnabledHorizGridLines(newValue bool)
+	EnableVertGridLine(newValue bool)
+	EnableMousePointDisplay(newValue bool)
 	GetTopLeftDescription() string
 	GetTitle() string
 	GetTopRightDescription() string
@@ -26,7 +34,7 @@ type SknLineChart interface {
 	SetBottomRightDescription(newValue string)
 	SetBottomCenteredDescription(newValue string)
 	SetDataSeriesColor(c color.Color)
-	ReplaceDataSeries(newData *map[string][]SknDataSeries) error
-	ApplyNewDataSeries(seriesName string, newSeries []SknDataSeries) error
-	ApplySingleDataPoint(seriesName string, newDataPoint SknDataSeries)
+	ReplaceDataSeries(newData *map[string][]SknDatapoint) error
+	ApplyNewDataSeries(seriesName string, newSeries []SknDatapoint) error
+	ApplySingleDataPoint(seriesName string, newDataPoint SknDatapoint)
 }
