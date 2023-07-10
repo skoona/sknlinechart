@@ -69,12 +69,17 @@ func main() {
 	dataPoints["first"] = first
 	dataPoints["second"] = second
 
-	lineChart, err := components.NewSknLineChart("Skoona Line Chart", "Time Series", &dataPoints)
+	lineChart, err := components.NewSknLineChart("Skoona Line Chart", "Example Time Series", &dataPoints)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
 	go (func(chart components.SknLineChart) {
+		time.Sleep(10 * time.Second)
+		err = lineChart.ApplyNewDataSeries("many", many)
+		if err != nil {
+			fmt.Println("ApplyNewDataSeries", err.Error())
+		}
 		for {
 			if windowClosed {
 				break
@@ -89,11 +94,6 @@ func main() {
 			time.Sleep(time.Second)
 		}
 	})(lineChart)
-
-	err = lineChart.ApplyNewDataSeries("many", many)
-	if err != nil {
-		fmt.Println("ApplyNewDataSeries", err.Error())
-	}
 
 	w.Resize(fyne.NewSize(1024, 512))
 	w.SetContent(lineChart)
