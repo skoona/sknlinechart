@@ -317,7 +317,7 @@ func (w *LineChartSkn) MouseMoved(me *desktop.MouseEvent) {
 			if !me.Position.IsZero() && !top.IsZero() {
 				if me.Position.X >= top.X && me.Position.X <= bottom.X &&
 					me.Position.Y >= top.Y && me.Position.Y <= bottom.Y {
-					value := fmt.Sprint(" Series: ", key, ", Index: ", idx, ", Value: ", point.Value(), ", ", point.Timestamp())
+					value := fmt.Sprint(" Series: ", key, ", Index: ", idx, ", Value: ", point.Value(), " [ ", point.Timestamp(), " ]")
 					w.enableMouseContainer(value, point.ColorName(), &me.Position).Refresh()
 				}
 			}
@@ -336,8 +336,9 @@ func (w *LineChartSkn) enableMouseContainer(value, frameColor string, mousePosit
 	w.mouseDisplayStr = value
 	w.mouseDisplayFrameColor = frameColor
 	ct := canvas.NewText(value, theme.PrimaryColorNamed(frameColor))
-	ts := fyne.MeasureText(ct.Text, ct.TextSize, ct.TextStyle)
-	mp := &fyne.Position{X: mousePosition.X - (ts.Width / 2), Y: mousePosition.Y - ts.Height - theme.Padding()}
+	parts := strings.Split(value, "[")
+	ts := fyne.MeasureText(parts[0], ct.TextSize, ct.TextStyle)
+	mp := &fyne.Position{X: mousePosition.X - (ts.Width / 2), Y: mousePosition.Y - (3 * ts.Height) - theme.Padding()}
 	w.mouseDisplayPosition = mp
 	return w
 }
@@ -383,10 +384,17 @@ func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
 	border := canvas.NewRectangle(theme.OverlayBackgroundColor())
 	border.StrokeColor = theme.PrimaryColorNamed(lineChart.mouseDisplayFrameColor)
 	border.StrokeWidth = 2.0
-	legend := canvas.NewText("", theme.ForegroundColor())
+	//legend := canvas.NewText("", theme.ForegroundColor())
+	//legend.TextStyle = fyne.TextStyle{
+	//	Bold:      true,
+	//	Monospace: false,
+	//}
+	legend := widget.NewLabel("")
+	legend.Alignment = fyne.TextAlignCenter
+	legend.Wrapping = fyne.TextWrapWord
 	legend.TextStyle = fyne.TextStyle{
-		Bold:      true,
-		Monospace: false,
+		Bold:   true,
+		Italic: true,
 	}
 	mouseDisplay := container.NewPadded(
 		border,
@@ -499,7 +507,7 @@ func (r *sknLineChartRenderer) Refresh() {
 	}
 
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
-	r.mouseDisplayContainer.Objects[1].(*canvas.Text).Text = r.widget.mouseDisplayStr
+	r.mouseDisplayContainer.Objects[1].(*widget.Label).SetText(r.widget.mouseDisplayStr)
 	r.mouseDisplayContainer.Refresh()
 
 	r.topLeftDesc.Text = r.widget.topLeftDesc
@@ -634,11 +642,11 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 	r.topRightDesc.Move(fyne.Position{X: (s.Width - ts.Width) - theme.Padding(), Y: ts.Height / 4})
 	r.topLeftDesc.Move(fyne.NewPos(theme.Padding(), ts.Height/4))
 
-	ts = fyne.MeasureText(
-		r.mouseDisplayContainer.Objects[1].(*canvas.Text).Text,
-		r.mouseDisplayContainer.Objects[1].(*canvas.Text).TextSize,
-		r.mouseDisplayContainer.Objects[1].(*canvas.Text).TextStyle)
-	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).Resize(fyne.NewSize(ts.Width+theme.Padding(), ts.Height))
+	msg := strings.Split(r.mouseDisplayContainer.Objects[1].(*widget.Label).Text, " [ ")
+
+	ts = fyne.MeasureText(msg[0], 14, r.mouseDisplayContainer.Objects[1].(*widget.Label).TextStyle)
+	r.mouseDisplayContainer.Objects[1].(*widget.Label).Resize(fyne.NewSize(ts.Width-theme.Padding(), (2*ts.Height)+theme.Padding())) // allow room for wrap
+	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).Resize(fyne.NewSize(ts.Width+theme.Padding(), (2*ts.Height)+theme.Padding()))
 	r.mouseDisplayContainer.Move(*r.widget.mouseDisplayPosition)
 
 	r.leftMiddleBox.Resize(fyne.NewSize(ts.Height, s.Height*0.75))
@@ -718,7 +726,7 @@ func (r *sknLineChartRenderer) Objects() []fyne.CanvasObject {
 			}
 		}
 	}
-	if r.mouseDisplayContainer.Objects[1].(*canvas.Text).Text != "" {
+	if r.mouseDisplayContainer.Objects[1].(*widget.Label).Text != "" {
 		objs = append(objs, r.mouseDisplayContainer)
 	}
 	return objs
