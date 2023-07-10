@@ -8,18 +8,55 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"ggApcMon/internal/commons"
-	"ggApcMon/internal/interfaces"
+	"github.com/skoona/sknlinechart/pkg/commons"
 	"image/color"
 	"strconv"
 	"strings"
 )
 
-// sknLineChart widget to display multiple series of data points
+// SknLineChart feature list
+type SknLineChart interface {
+	IsDataPointMarkersEnabled() bool
+	IsHorizGridLinesEnabled() bool
+	IsVertGridLinesEnabled() bool
+	IsMousePointDisplayEnabled() bool
+
+	EnableDataPointMarkers(newValue bool)
+	EnabledHorizGridLines(newValue bool)
+	EnableVertGridLine(newValue bool)
+	EnableMousePointDisplay(newValue bool)
+
+	GetTopLeftDescription() string
+	GetTitle() string
+	GetTopRightDescription() string
+	GetMiddleLeftDescription() string
+	GetMiddleRightDescription() string
+	GetBottomLeftDescription() string
+	GetBottomCenteredDescription() string
+	GetBottomRightDescription() string
+	SetTopLeftDescription(newValue string)
+
+	SetTitle(newValue string)
+	SetTopRightDescription(newValue string)
+	SetMiddleLeftDescription(newValue string)
+	SetMiddleRightDescription(newValue string)
+	SetBottomLeftDescription(newValue string)
+	SetBottomRightDescription(newValue string)
+	SetBottomCenteredDescription(newValue string)
+
+	SetMinSize(s fyne.Size)
+	ReplaceDataSeries(newData *map[string][]SknChartDatapoint) error
+
+	ApplyNewDataSeries(seriesName string, newSeries []SknChartDatapoint) error
+	ApplySingleDataPoint(seriesName string, newDataPoint SknChartDatapoint)
+}
+
+// LineChartSkn widget to display multiple series of data points
 // which will roll off older point beyond the 120 point limit.
-type sknLineChart struct {
+type LineChartSkn struct {
 	widget.BaseWidget       // Inherit from BaseWidget
-	dataPoints              *map[string][]interfaces.SknDatapoint
+	desktop.Hoverable       // support mouse tracking
+	dataPoints              *map[string][]SknChartDatapoint
 	dataPointScale          fyne.Size
 	dataPointLimit          int
 	enableDataPointMarkers  bool
@@ -40,14 +77,14 @@ type sknLineChart struct {
 	minSize                 fyne.Size
 }
 
-var _ interfaces.SknLineChart = (*sknLineChart)(nil)
+var _ SknLineChart = (*LineChartSkn)(nil)
 
 // NewSknLineChart Create the Line Chart
 // be careful not to exceed the series data point limit, which defaults to 120
 //
 // can return a valid chart object and an error object; errors really should be handled
 // and are caused by data points exceeding the container limit of 120; they will be truncated
-func NewSknLineChart(tTitle, bTitle string, dataPoints *map[string][]interfaces.SknDatapoint) (*sknLineChart, error) {
+func NewSknLineChart(tTitle, bTitle string, dataPoints *map[string][]SknChartDatapoint) (*LineChartSkn, error) {
 	var err error
 	dpl := 120
 	for key, points := range *dataPoints {
@@ -61,7 +98,7 @@ func NewSknLineChart(tTitle, bTitle string, dataPoints *map[string][]interfaces.
 		}
 	}
 
-	w := &sknLineChart{ // Create this widget with an initial text value
+	w := &LineChartSkn{ // Create this widget with an initial text value
 		dataPoints:              dataPoints,
 		dataPointLimit:          dpl,
 		dataPointScale:          fyne.NewSize(120.0, 110.0),
@@ -87,138 +124,138 @@ func NewSknLineChart(tTitle, bTitle string, dataPoints *map[string][]interfaces.
 }
 
 // CreateRenderer Create the renderer. This is called by the fyne application
-func (w *sknLineChart) CreateRenderer() fyne.WidgetRenderer {
+func (w *LineChartSkn) CreateRenderer() fyne.WidgetRenderer {
 	return newSknLineChartRenderer(w)
 }
 
 // SetMinSize override the default min size of chart
-func (w *sknLineChart) SetMinSize(s fyne.Size) {
+func (w *LineChartSkn) SetMinSize(s fyne.Size) {
 	w.minSize = s
 }
 
 // GetTopLeftDescription return text from top left label
-func (w *sknLineChart) GetTopLeftDescription() string {
+func (w *LineChartSkn) GetTopLeftDescription() string {
 	return w.topLeftDesc
 }
 
 // GetTitle return text of the chart's title from top center
-func (w *sknLineChart) GetTitle() string {
+func (w *LineChartSkn) GetTitle() string {
 	return w.topCenteredDesc
 }
 
 // IsDataPointMarkersEnabled returns state of chart's use of data point markers on series data
-func (w *sknLineChart) IsDataPointMarkersEnabled() bool {
+func (w *LineChartSkn) IsDataPointMarkersEnabled() bool {
 	return w.enableDataPointMarkers
 }
 
 // IsHorizGridLinesEnabled returns state of chart's display of horizontal grid line
-func (w *sknLineChart) IsHorizGridLinesEnabled() bool {
+func (w *LineChartSkn) IsHorizGridLinesEnabled() bool {
 	return w.enableHorizGridLines
 }
 
 // IsVertGridLinesEnabled returns state of chart's display of vertical grid line
-func (w *sknLineChart) IsVertGridLinesEnabled() bool {
+func (w *LineChartSkn) IsVertGridLinesEnabled() bool {
 	return w.enableVertGridLines
 }
 
 // IsMousePointDisplayEnabled return state of mouse popups when hovered over a chart datapoint
-func (w *sknLineChart) IsMousePointDisplayEnabled() bool {
+func (w *LineChartSkn) IsMousePointDisplayEnabled() bool {
 	return w.enableMousePointDisplay
 }
 
 // GetTopRightDescription returns text of top right label
-func (w *sknLineChart) GetTopRightDescription() string {
+func (w *LineChartSkn) GetTopRightDescription() string {
 	return w.topRightDesc
 }
 
 // GetMiddleLeftDescription returns text of middle left label
-func (w *sknLineChart) GetMiddleLeftDescription() string {
+func (w *LineChartSkn) GetMiddleLeftDescription() string {
 	return w.leftMiddleDesc
 }
 
 // GetMiddleRightDescription returns text of middle right label
-func (w *sknLineChart) GetMiddleRightDescription() string {
+func (w *LineChartSkn) GetMiddleRightDescription() string {
 	return w.rightMiddleDesc
 }
 
 // GetBottomLeftDescription returns text of bottom left label
-func (w *sknLineChart) GetBottomLeftDescription() string {
+func (w *LineChartSkn) GetBottomLeftDescription() string {
 	return w.bottomLeftDesc
 }
 
 // GetBottomCenteredDescription returns text of bottom center label
-func (w *sknLineChart) GetBottomCenteredDescription() string {
+func (w *LineChartSkn) GetBottomCenteredDescription() string {
 	return w.bottomCenteredDesc
 }
 
 // GetBottomRightDescription returns text of bottom right label
-func (w *sknLineChart) GetBottomRightDescription() string {
+func (w *LineChartSkn) GetBottomRightDescription() string {
 	return w.bottomRightDesc
 }
 
 // SetTopLeftDescription sets text to be display on chart at top left
-func (w *sknLineChart) SetTopLeftDescription(newValue string) {
+func (w *LineChartSkn) SetTopLeftDescription(newValue string) {
 	w.topLeftDesc = newValue
 }
 
 // SetTitle sets text to be display on chart at top center
-func (w *sknLineChart) SetTitle(newValue string) {
+func (w *LineChartSkn) SetTitle(newValue string) {
 	w.topCenteredDesc = newValue
 }
 
 // SetTopRightDescription changes displayed text, empty disables display
-func (w *sknLineChart) SetTopRightDescription(newValue string) {
+func (w *LineChartSkn) SetTopRightDescription(newValue string) {
 	w.topRightDesc = newValue
 }
 
 // SetMiddleLeftDescription changes displayed text, empty disables display
-func (w *sknLineChart) SetMiddleLeftDescription(newValue string) {
+func (w *LineChartSkn) SetMiddleLeftDescription(newValue string) {
 	w.leftMiddleDesc = newValue
 }
 
 // SetMiddleRightDescription changes displayed text, empty disables display
-func (w *sknLineChart) SetMiddleRightDescription(newValue string) {
+func (w *LineChartSkn) SetMiddleRightDescription(newValue string) {
 	w.rightMiddleDesc = newValue
 }
 
 // SetBottomLeftDescription changes displayed text, empty disables display
-func (w *sknLineChart) SetBottomLeftDescription(newValue string) {
+func (w *LineChartSkn) SetBottomLeftDescription(newValue string) {
 	w.bottomLeftDesc = newValue
 }
 
 // SetBottomRightDescription changes displayed text, empty disables display
-func (w *sknLineChart) SetBottomRightDescription(newValue string) {
+func (w *LineChartSkn) SetBottomRightDescription(newValue string) {
 	w.bottomRightDesc = newValue
 }
 
 // SetBottomCenteredDescription changes displayed text, empty disables display
-func (w *sknLineChart) SetBottomCenteredDescription(newValue string) {
+func (w *LineChartSkn) SetBottomCenteredDescription(newValue string) {
 	w.bottomCenteredDesc = newValue
 }
 
 // EnableDataPointMarkers enables data point markers on display series points
-func (w *sknLineChart) EnableDataPointMarkers(newValue bool) {
+func (w *LineChartSkn) EnableDataPointMarkers(newValue bool) {
 	w.enableDataPointMarkers = newValue
 }
 
 // EnabledHorizGridLines enables chart horizontal grid lines
-func (w *sknLineChart) EnabledHorizGridLines(newValue bool) {
+func (w *LineChartSkn) EnabledHorizGridLines(newValue bool) {
 	w.enableHorizGridLines = newValue
 }
 
 // EnableVertGridLine enables chart vertical grid lines
-func (w *sknLineChart) EnableVertGridLine(newValue bool) {
+func (w *LineChartSkn) EnableVertGridLine(newValue bool) {
 	w.enableVertGridLines = newValue
 }
 
 // EnableMousePointDisplay true/false, enables data point display under mouse pointer
-func (w *sknLineChart) EnableMousePointDisplay(newValue bool) {
+func (w *LineChartSkn) EnableMousePointDisplay(newValue bool) {
 	w.enableMousePointDisplay = newValue
 }
 
 // ReplaceDataSeries replaces all the chart's series data
 // throws an error if any series exceeds the container limit
-func (w *sknLineChart) ReplaceDataSeries(newData *map[string][]interfaces.SknDatapoint) error {
+func (w *LineChartSkn) ReplaceDataSeries(newData *map[string][]SknChartDatapoint) error {
 	if w.dataPoints == nil {
 		return fmt.Errorf("ReplaceDataSeries() no active widget")
 	}
@@ -238,7 +275,7 @@ func (w *sknLineChart) ReplaceDataSeries(newData *map[string][]interfaces.SknDat
 
 // ApplyNewDataSeries adds a new series of data to existing chart set.
 // throws error if new series exceeds containers point limit
-func (w *sknLineChart) ApplyNewDataSeries(seriesName string, newSeries []interfaces.SknDatapoint) error {
+func (w *LineChartSkn) ApplyNewDataSeries(seriesName string, newSeries []SknChartDatapoint) error {
 	if w == nil {
 		return fmt.Errorf("ApplyNewDataSeries() no active widget")
 	}
@@ -254,7 +291,7 @@ func (w *sknLineChart) ApplyNewDataSeries(seriesName string, newSeries []interfa
 
 // ApplySingleDataPoint adds a new datapoint to an existing series
 // will shift out the oldest point if containers limit is exceeded
-func (w *sknLineChart) ApplySingleDataPoint(seriesName string, newDataPoint interfaces.SknDatapoint) {
+func (w *LineChartSkn) ApplySingleDataPoint(seriesName string, newDataPoint SknChartDatapoint) {
 	if w == nil {
 		return
 	}
@@ -267,12 +304,10 @@ func (w *sknLineChart) ApplySingleDataPoint(seriesName string, newDataPoint inte
 }
 
 // MouseIn unused interface method
-func (w *sknLineChart) MouseIn(*desktop.MouseEvent) {
-
-}
+func (w *LineChartSkn) MouseIn(*desktop.MouseEvent) {}
 
 // MouseMoved interface method to discover which data point is under mouse
-func (w *sknLineChart) MouseMoved(me *desktop.MouseEvent) {
+func (w *LineChartSkn) MouseMoved(me *desktop.MouseEvent) {
 	if !w.enableMousePointDisplay {
 		return
 	}
@@ -282,7 +317,7 @@ func (w *sknLineChart) MouseMoved(me *desktop.MouseEvent) {
 			if !me.Position.IsZero() && !top.IsZero() {
 				if me.Position.X >= top.X && me.Position.X <= bottom.X &&
 					me.Position.Y >= top.Y && me.Position.Y <= bottom.Y {
-					value := fmt.Sprint(" Series: ", key, ", Index: ", idx, ", Value: ", point.Value())
+					value := fmt.Sprint(" Series: ", key, ", Index: ", idx, ", Value: ", point.Value(), ", ", point.Timestamp())
 					w.enableMouseContainer(value, point.ColorName(), &me.Position).Refresh()
 				}
 			}
@@ -291,13 +326,13 @@ func (w *sknLineChart) MouseMoved(me *desktop.MouseEvent) {
 }
 
 // MouseOut disable display of mouse data point display
-func (w *sknLineChart) MouseOut() {
+func (w *LineChartSkn) MouseOut() {
 	w.disableMouseContainer()
 }
 
 // enableMouseContainer private method to prepare values need by renderer to create pop display
 // composes display text, captures position and colorName for use by renderer
-func (w *sknLineChart) enableMouseContainer(value, frameColor string, mousePosition *fyne.Position) *sknLineChart {
+func (w *LineChartSkn) enableMouseContainer(value, frameColor string, mousePosition *fyne.Position) *LineChartSkn {
 	w.mouseDisplayStr = value
 	w.mouseDisplayFrameColor = frameColor
 	ct := canvas.NewText(value, theme.PrimaryColorNamed(frameColor))
@@ -309,13 +344,13 @@ func (w *sknLineChart) enableMouseContainer(value, frameColor string, mousePosit
 
 // disableMouseContainer private method to manage mouse leaving window
 // blank string will prevent display
-func (w *sknLineChart) disableMouseContainer() {
+func (w *LineChartSkn) disableMouseContainer() {
 	w.mouseDisplayStr = ""
 }
 
 // Widget Renderer code starts here
 type sknLineChartRenderer struct {
-	widget                *sknLineChart     // Reference to the widget holding the current state
+	widget                *LineChartSkn     // Reference to the widget holding the current state
 	chartFrame            *canvas.Rectangle // A chartFrame rectangle
 	xInc                  float32
 	yInc                  float32
@@ -340,7 +375,7 @@ type sknLineChartRenderer struct {
 // and all the objects to be displayed for this custom widget
 //
 // Note: Do not size or move canvas objects here.
-func newSknLineChartRenderer(lineChart *sknLineChart) *sknLineChartRenderer {
+func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
 	background := canvas.NewRectangle(color.Transparent)
 	background.StrokeWidth = 0.75
 	background.StrokeColor = theme.PrimaryColorNamed(theme.ColorBlue)

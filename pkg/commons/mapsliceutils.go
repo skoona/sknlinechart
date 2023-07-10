@@ -1,9 +1,6 @@
 package commons
 
-// RemoveIndexFromSlice()
-// -- No good way to handle various types of slices
-//
-//	since reflection does not support custom types
+// RemoveIndexFromSlice remove the given index from any type of slice
 func RemoveIndexFromSlice[K comparable](index int, slice []K) []K {
 	var idx int
 
@@ -17,6 +14,7 @@ func RemoveIndexFromSlice[K comparable](index int, slice []K) []K {
 	return append(slice[:idx], slice[idx+1:]...)
 }
 
+// ShiftSlice drops index 0 and append newData to any type of slice
 func ShiftSlice[K comparable](newData K, slice []K) []K {
 	idx := 0
 
@@ -25,7 +23,7 @@ func ShiftSlice[K comparable](newData K, slice []K) []K {
 	return shorter
 }
 
-// MapKeys returns a slice og the key in a map
+// MapKeys returns a slice of the keys in a map
 //
 // []K := MapKeys(m)
 // []K := MapKeys[int, string](m)

@@ -1,4 +1,5 @@
 .idea
 *.log
-bin/
+cmd/
 *.log
+./sknlinechart

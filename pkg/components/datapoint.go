@@ -1,9 +1,25 @@
-package entities
+package components
 
 import (
 	"fyne.io/fyne/v2"
-	"ggApcMon/internal/interfaces"
 )
+
+// SknChartDatapoint data container interface for SknLineChart
+type SknChartDatapoint interface {
+	Value() float32
+	SetValue(y float32)
+
+	ColorName() string
+	SetColorName(n string)
+
+	Timestamp() string
+	SetTimestamp(t string)
+
+	// MarkerPosition internal use only: current data point marker location
+	MarkerPosition() (*fyne.Position, *fyne.Position)
+	// SetMarkerPosition internal use only: sace location of where data point marker is located
+	SetMarkerPosition(top *fyne.Position, bottom *fyne.Position)
+}
 
 type sknDatapoint struct {
 	value                float32
@@ -13,7 +29,7 @@ type sknDatapoint struct {
 	timestamp            string
 }
 
-func NewSknDatapoint(value float32, colorName, timestamp string) interfaces.SknDatapoint {
+func NewSknDatapoint(value float32, colorName, timestamp string) SknChartDatapoint {
 	return &sknDatapoint{
 		value:                value,
 		colorName:            colorName,
