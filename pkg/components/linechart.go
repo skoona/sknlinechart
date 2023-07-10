@@ -4,11 +4,50 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/skoona/sknlinechart/pkg/commons"
+)
+
+/*
+ * SknLineChart
+ * Custom Fyne 2.0 Widget
+ * Strategy
+ * 1. Define Widget Named/Exported Struct
+ *    1. export fields when possible
+ * 2. Define Widget Renderer Named/unExported Struct
+ *    1. un-exportable fields when possible
+ * 3. Define NewWidget() *ExportedStruct method
+ *    1. Define state variables for this widget
+ *    2. Extend the BaseWidget
+ *    3. Define Widget required methods
+ *       1. CreateRenderer() fyne.WidgetRenderer, call newRenderer() below
+ *    4. Define any methods required by additional interfaces, like
+ *       desktop.Mouseable for mouse button support
+ *       1. MouseDown(me MouseEvent)
+ *       2. MouseUp(me MouseEvent)
+ *       desktop.Hoverable for mouse movement support
+ *       1. MouseIn(me MouseEvent)
+ *       2. MouseMoved(me MouseEvent)  used to display data point under mouse
+ *       3. MouseOut()
+ *
+ * 4. Define newRenderer() *notExportedStruct method
+ *    1. Create canvas objects to be used in display
+ *    2. Initialize there content if practical; not required
+ *    3. Implement the required WidgetRenderer methods
+ * 	  4. Refresh()               call refresh on each object
+ * 	  5. Layout(s fyne.Size)     resize & move objects
+ * 	  6. MinSize()  fyne.Size    return the minimum size needed
+ * 	  7. Object() []fyne.Canvas  return the objects to be displayed
+ * 	  8. Destroy()               cleanup if needed to prevent leaks
+ * 5. In general state methods are the public api with or without getters/setters
+ *    and the renderer creates the displayable objects, applies state/value to them, and
+ *    manages their display.
+ */
+
+import (
+	"fyne.io/fyne/v2/container"
 	"image/color"
 	"strconv"
 	"strings"
@@ -102,7 +141,7 @@ func NewSknLineChart(topTitle, bottomTitle string, dataPoints *map[string][]SknC
 	w := &LineChartSkn{ // Create this widget with an initial text value
 		dataPoints:              dataPoints,
 		DataPointXLimit:         dpl,
-		dataPointScale:          fyne.NewSize(120.0, 110.0),
+		dataPointScale:          fyne.NewSize(float32(dpl), 110.0),
 		EnableDataPointMarkers:  true,
 		EnableHorizGridLines:    true,
 		EnableVertGridLines:     true,
@@ -395,7 +434,6 @@ var _ fyne.WidgetRenderer = (*sknLineChartRenderer)(nil)
 //
 // Note: Do not size or move canvas objects here.
 func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
-	fmt.Println("sknLineChartRenderer::newSknLineChartRenderer() called")
 	background := canvas.NewRectangle(color.Transparent)
 	background.StrokeWidth = 0.75
 	background.StrokeColor = theme.PrimaryColorNamed(theme.ColorBlue)
@@ -504,7 +542,6 @@ func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
 // Refresh method is called if the state of the widget changes or the
 // theme is changed
 func (r *sknLineChartRenderer) Refresh() {
-	fmt.Println(" ====> sknLineChartRenderer::Refresh() called")
 	r.verifyDataPoints()
 
 	r.chartFrame.Refresh()            // Redraw the chartFrame first
@@ -565,8 +602,6 @@ func (r *sknLineChartRenderer) Refresh() {
 // Layout Given the size required by the fyne application
 // move and re-size the all custom widget canvas objects here
 func (r *sknLineChartRenderer) Layout(s fyne.Size) {
-	fmt.Println("sknLineChartRenderer::Layout() called")
-
 	r.xInc = (s.Width - theme.Padding()) / 14.0
 	r.yInc = (s.Height - theme.Padding()) / 14.0
 
@@ -606,11 +641,13 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 	dp := float32(1.0)
 	for key, data := range *r.widget.dataPoints { // datasource
 		lastPoint := fyne.NewPos(xp, yp)
-		if nil == r.dataPoints[key] {
-			r.dataPoints[key] = []*canvas.Line{}
-			r.dataPointMarkers[key] = []*canvas.Circle{}
-			fmt.Println(" ====> sknLineChartRenderer::Layout() called, add series: ", key)
-		}
+		/*
+			if nil == r.dataPoints[key] {
+				r.dataPoints[key] = []*canvas.Line{}
+				r.dataPointMarkers[key] = []*canvas.Circle{}
+				fmt.Println(" ====> sknLineChartRenderer::Layout() called, add series: ", key)
+			}
+		*/
 		for idx, point := range data { // one set of lines
 			if point.Value() > r.widget.dataPointScale.Height {
 				dp = r.widget.dataPointScale.Height
@@ -625,16 +662,17 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 			if idx == 0 {
 				lastPoint.Y = yy
 			}
-
-			if idx > (len(r.dataPoints[key]) - 1) { // concurrency error !!!
-				x := canvas.NewLine(theme.PrimaryColorNamed(point.ColorName()))
-				x.StrokeWidth = 2.0
-				r.dataPoints[key] = append(r.dataPoints[key], x)
-				z := canvas.NewCircle(theme.PrimaryColorNamed(point.ColorName()))
-				z.StrokeWidth = 4.0
-				r.dataPointMarkers[key] = append(r.dataPointMarkers[key], z)
-				fmt.Println(" ====> sknLineChartRenderer::Layout() called, add points: ", key, ", index: ", idx)
-			}
+			/*
+				if idx > (len(r.dataPoints[key]) - 1) { // concurrency error !!!
+					x := canvas.NewLine(theme.PrimaryColorNamed(point.ColorName()))
+					x.StrokeWidth = 2.0
+					r.dataPoints[key] = append(r.dataPoints[key], x)
+					z := canvas.NewCircle(theme.PrimaryColorNamed(point.ColorName()))
+					z.StrokeWidth = 4.0
+					r.dataPointMarkers[key] = append(r.dataPointMarkers[key], z)
+					fmt.Println(" ====> sknLineChartRenderer::Layout() called, add points: ", key, ", index: ", idx)
+				}
+			*/
 			r.dataPoints[key][idx].Position1 = thisPoint
 			r.dataPoints[key][idx].Position2 = lastPoint
 			lastPoint = thisPoint
@@ -695,15 +733,12 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 // MinSize Create a minimum size for the widget.
 // The smallest size is can be overridden by user
 func (r *sknLineChartRenderer) MinSize() fyne.Size {
-	fmt.Println("sknLineChartRenderer::MinSize() called")
 	return r.widget.minSize
 }
 
 // Objects Return a list of each canvas object.
 // but only the objects that have been enabled or are not at default value; i.e. ""
 func (r *sknLineChartRenderer) Objects() []fyne.CanvasObject {
-	fmt.Println("sknLineChartRenderer::Objects() called")
-
 	objs := []fyne.CanvasObject{
 		r.chartFrame,
 	}
