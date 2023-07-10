@@ -2,4 +2,4 @@
 *.log
 cmd/
 *.log
-./sknlinechart
+sknlinechart
