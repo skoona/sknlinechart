@@ -94,6 +94,14 @@ type SknLineChart interface {
  * 5. In general state methods are the public api with or without getters/setters
  *    and the renderer creates the displayable objects, applies state/value to them, and
  *    manages their display.
+ *
+ * Critical Notes:
+ * - if using maps, map[string]interface{}, they will require a mutex to prevent concurrency error cause my concurrent read/writes.
+ * - data binding creates new var from source var, and its the new var that should be shared as it is synchronized to changes in bond data var.
+ */
+ */
+ */
+ */
  */
 ```
 
@@ -180,9 +188,10 @@ func main() {
 		time.Sleep(10 * time.Second)
 		err = lineChart.ApplyDataSeries("many", many)
 		if err != nil {
-			fmt.Println("ApplyNewDataSeries", err.Error())
+			fmt.Println("ApplyDataSeries", err.Error())
 		}
-		for {
+		time.Sleep(time.Second)
+		for i := 0; i < 150; i++ {
 			if windowClosed {
 				break
 			}
@@ -197,7 +206,7 @@ func main() {
 		}
 	})(lineChart)
 
-	w.Resize(fyne.NewSize(1024, 512))
+	w.Resize(fyne.NewSize(1024, 756))
 	w.SetContent(lineChart)
 	//w.SetContent(container.NewPadded(lineChart))
 

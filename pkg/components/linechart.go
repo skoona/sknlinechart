@@ -59,6 +59,7 @@ type LineChartSkn struct {
 	widget.BaseWidget       // Inherit from BaseWidget
 	desktop.Hoverable       // support mouse tracking
 	desktop.Mouseable       // Mouse Clicks
+	datapointOrSeriesAdded  bool
 	DataPointXLimit         int
 	EnableDataPointMarkers  bool
 	EnableHorizGridLines    bool
@@ -106,6 +107,7 @@ func NewSknLineChart(topTitle, bottomTitle string, dataPoints *map[string][]SknC
 
 	w := &LineChartSkn{ // Create this widget with an initial text value
 		dataPoints:              dataPoints,
+		datapointOrSeriesAdded:  true,
 		DataPointXLimit:         dpl,
 		dataPointScale:          fyne.NewSize(float32(dpl), 110.0),
 		EnableDataPointMarkers:  true,
@@ -274,6 +276,7 @@ func (w *LineChartSkn) ApplyDataSeries(seriesName string, newSeries []SknChartDa
 	if len(newSeries) < w.DataPointXLimit {
 		w.propertyLock.Lock()
 		(*w.dataPoints)[seriesName] = newSeries
+		w.datapointOrSeriesAdded = true
 		w.propertyLock.Unlock()
 		w.Refresh()
 	} else {
@@ -299,7 +302,7 @@ func (w *LineChartSkn) ApplyDataPoint(seriesName string, newDataPoint SknChartDa
 	} else {
 		(*w.dataPoints)[seriesName] = ShiftSlice(newDataPoint, (*w.dataPoints)[seriesName])
 	}
-
+	w.datapointOrSeriesAdded = true
 	w.propertyLock.Unlock()
 	w.Refresh()
 	fmt.Println("LineChartSkn::ApplyDataPoint() EXIT")
@@ -312,7 +315,7 @@ func (w *LineChartSkn) MinSize() fyne.Size {
 	fmt.Println("LineChartSkn::MinSize() ENTER")
 	w.ExtendBaseWidget(w)
 	val := w.BaseWidget.MinSize()
-	fmt.Println("LineChartSkn::MinSize() EXIT")
+	fmt.Println("LineChartSkn::MinSize() EXIT: ", val, "Current: ", w.Size())
 	return val
 }
 
@@ -572,10 +575,14 @@ func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
 // theme is changed
 func (r *sknLineChartRenderer) Refresh() {
 	fmt.Println("sknLineChartRenderer::Refresh() ENTER")
-	r.verifyDataPoints()
+	if r.widget.datapointOrSeriesAdded {
+		r.verifyDataPoints()
+	}
 
-	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
-	r.mouseDisplayContainer.Objects[1].(*widget.Label).SetText(r.widget.mouseDisplayStr)
+	if strings.Compare(r.widget.mouseDisplayStr, r.mouseDisplayContainer.Objects[1].(*widget.Label).Text) != 0 {
+		r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
+		r.mouseDisplayContainer.Objects[1].(*widget.Label).SetText(r.widget.mouseDisplayStr)
+	}
 
 	r.topLeftDesc.Text = r.widget.TopLeftLabel
 	r.topCenteredDesc.Text = r.widget.TopCenteredLabel
@@ -607,17 +614,20 @@ func (r *sknLineChartRenderer) Refresh() {
 	for _, v := range r.widget.objects {
 		v.Refresh()
 	}
-	for _, points := range r.dataPoints {
-		for _, point := range points {
-			point.Refresh()
-		}
-	}
-	for _, markers := range r.dataPointMarkers {
-		for _, mark := range markers {
-			mark.Refresh()
-		}
-	}
 
+	if r.widget.datapointOrSeriesAdded {
+		for _, points := range r.dataPoints {
+			for _, point := range points {
+				point.Refresh()
+			}
+		}
+		for _, markers := range r.dataPointMarkers {
+			for _, mark := range markers {
+				mark.Refresh()
+			}
+		}
+		r.widget.datapointOrSeriesAdded = false
+	}
 	r.mouseDisplayContainer.Refresh()
 	fmt.Println("sknLineChartRenderer::Refresh() EXIT")
 }
@@ -625,7 +635,7 @@ func (r *sknLineChartRenderer) Refresh() {
 // Layout Given the size required by the fyne application
 // move and re-size the all custom widget canvas objects here
 func (r *sknLineChartRenderer) Layout(s fyne.Size) {
-	fmt.Println("sknLineChartRenderer::Layout() ENTER")
+	fmt.Println("sknLineChartRenderer::Layout() ENTER: ", s)
 	r.widget.propertyLock.Lock()
 	defer r.widget.propertyLock.Unlock()
 
@@ -716,7 +726,6 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 	r.topLeftDesc.Move(fyne.NewPos(theme.Padding(), ts.Height/4))
 
 	msg := strings.Split(r.mouseDisplayContainer.Objects[1].(*widget.Label).Text, " [ ")
-
 	ts = fyne.MeasureText(msg[0], 14, r.mouseDisplayContainer.Objects[1].(*widget.Label).TextStyle)
 	r.mouseDisplayContainer.Objects[1].(*widget.Label).Resize(fyne.NewSize(ts.Width-theme.Padding(), (2*ts.Height)+theme.Padding())) // allow room for wrap
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).Resize(fyne.NewSize(ts.Width+theme.Padding(), (2*ts.Height)+theme.Padding()))
@@ -761,8 +770,9 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 func (r *sknLineChartRenderer) MinSize() fyne.Size {
 	fmt.Println("sknLineChartRenderer::MinSize() ENTER")
 	r.widget.ExtendBaseWidget(r.widget)
-	fmt.Println("sknLineChartRenderer::MinSize() EXIT")
-	return fyne.NewSize(r.widget.minSize.Width, r.widget.minSize.Height)
+	val := fyne.NewSize(r.widget.minSize.Width, r.widget.minSize.Height)
+	fmt.Println("sknLineChartRenderer::MinSize() EXIT: ", val)
+	return val
 }
 
 // Objects Return a list of each canvas object.
