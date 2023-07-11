@@ -5,12 +5,12 @@ Line chart with 120 horizontal, xscale, divisions displayed. The Y scale is limi
 * Multiple Series of datapoints rendered as a single line
 * Series should be the same color. Each point in this chart accepts a themed color name
 * 120 datapoint are displayed on the x scale of chart, with 100 as the default Y value.
-* More than 120 causes the earliest points to be rolled off the screen; each series is independently scrolls
-* Data points can be add at any time, cause the series to possible scroll automatically
+* More than 120 data points causes the earliest points to be rolled off the screen; each series is independently scrolls
+* Data points can be added at any time, causing the series to possible scroll automatically
 * The 120 x limit will throw and error on creation of the chart, or on the replacement of its active dataset.
 * Data point markers are toggled with mouse button 2
 * Hovering over a data point will show a popup near the mouse pointer, showing series, value, index, and timestamp of data under mouse
-* Mouse button 1 will turn off the sticky popup
+* Mouse button 1 will toggle the sticky datapoint popup
 * Labels are available for all four corners of window, include bottom and top centered titles
 * left and right middle labels can be used as scale descriptions
 * Any label left empty will not be displayed.
