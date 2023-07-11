@@ -80,6 +80,7 @@ func main() {
 		if err != nil {
 			fmt.Println("ApplyNewDataSeries", err.Error())
 		}
+		time.Sleep(time.Second)
 		for {
 			if windowClosed {
 				break

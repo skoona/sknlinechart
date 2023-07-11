@@ -571,7 +571,10 @@ func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
 	br := canvas.NewText(lineChart.BottomRightLabel, theme.ForegroundColor())
 	objs = append(objs, tl, tr, bl, br)
 
-	renderer := &sknLineChartRenderer{
+	// save all except datapints, markers, and mouse box
+	lineChart.objects = append(lineChart.objects, objs...)
+
+	return &sknLineChartRenderer{
 		widget:                lineChart,
 		chartFrame:            background,
 		xLines:                xlines,
@@ -590,9 +593,6 @@ func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
 		dataPointMarkers:      dpMaker,
 		mouseDisplayContainer: mouseDisplay,
 	}
-	// save all except datapints, markers, and mouse box
-	lineChart.objects = append(lineChart.objects, objs...)
-	return renderer
 }
 
 // Refresh method is called if the state of the widget changes or the
@@ -629,13 +629,21 @@ func (r *sknLineChartRenderer) Refresh() {
 		r.rightMiddleBox.Add(z)
 	}
 
-	r.topLeftDesc.Refresh()
-	r.topCenteredDesc.Refresh()
-	r.topRightDesc.Refresh()
-	r.bottomLeftDesc.Refresh()
-	r.bottomCenteredDesc.Refresh()
-	r.bottomRightDesc.Refresh()
+	for _, v := range r.widget.objects {
+		v.Refresh()
+	}
+	for _, points := range r.dataPoints {
+		for _, point := range points {
+			point.Refresh()
+		}
+	}
+	for _, markers := range r.dataPointMarkers {
+		for _, mark := range markers {
+			mark.Refresh()
+		}
+	}
 
+	r.mouseDisplayContainer.Refresh()
 }
 
 // Layout Given the size required by the fyne application
