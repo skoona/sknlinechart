@@ -307,8 +307,8 @@ func (w *LineChartSkn) ReplaceAllDataSeries(newData *map[string][]SknChartDatapo
 		return fmt.Errorf("ReplaceAllDataSeries() no active widget")
 	}
 
-	w.propertyLock.RLock()
-	defer w.propertyLock.RUnlock()
+	w.propertyLock.Lock()
+	defer w.propertyLock.Unlock()
 
 	if len(*w.dataPoints) <= len(*newData) {
 		for key, points := range *newData {
@@ -331,8 +331,8 @@ func (w *LineChartSkn) ApplyNewDataSeries(seriesName string, newSeries []SknChar
 		return fmt.Errorf("ApplyNewDataSeries() no active widget")
 	}
 
-	w.propertyLock.RLock()
-	defer w.propertyLock.RUnlock()
+	w.propertyLock.Lock()
+	defer w.propertyLock.Unlock()
 
 	if len(newSeries) < w.DataPointXLimit {
 		(*w.dataPoints)[seriesName] = newSeries
@@ -350,8 +350,8 @@ func (w *LineChartSkn) ApplySingleDataPoint(seriesName string, newDataPoint SknC
 		return
 	}
 
-	w.propertyLock.RLock()
-	defer w.propertyLock.RUnlock()
+	w.propertyLock.Lock()
+	defer w.propertyLock.Unlock()
 
 	if len((*w.dataPoints)[seriesName]) < w.DataPointXLimit {
 		(*w.dataPoints)[seriesName] = append((*w.dataPoints)[seriesName], newDataPoint)
@@ -425,8 +425,8 @@ func (w *LineChartSkn) MouseOut() {
 // enableMouseContainer private method to prepare values need by renderer to create pop display
 // composes display text, captures position and colorName for use by renderer
 func (w *LineChartSkn) enableMouseContainer(value, frameColor string, mousePosition *fyne.Position) *LineChartSkn {
-	w.propertyLock.RLock()
-	defer w.propertyLock.RUnlock()
+	w.propertyLock.Lock()
+	defer w.propertyLock.Unlock()
 
 	w.mouseDisplayStr = value
 	w.mouseDisplayFrameColor = frameColor
@@ -476,8 +476,8 @@ var _ fyne.WidgetRenderer = (*sknLineChartRenderer)(nil)
 // Note: Do not size or move canvas objects here.
 func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
 	lineChart.ExtendBaseWidget(lineChart)
-	lineChart.propertyLock.RLock()
-	defer lineChart.propertyLock.RUnlock()
+	lineChart.propertyLock.Lock()
+	defer lineChart.propertyLock.Unlock()
 
 	objs := []fyne.CanvasObject{}
 
@@ -610,8 +610,8 @@ func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
 // theme is changed
 func (r *sknLineChartRenderer) Refresh() {
 	r.verifyDataPoints()
-	r.widget.propertyLock.RLock()
-	defer r.widget.propertyLock.RUnlock()
+	r.widget.propertyLock.Lock()
+	defer r.widget.propertyLock.Unlock()
 
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
 	r.mouseDisplayContainer.Objects[1].(*widget.Label).SetText(r.widget.mouseDisplayStr)
@@ -660,8 +660,8 @@ func (r *sknLineChartRenderer) Refresh() {
 // Layout Given the size required by the fyne application
 // move and re-size the all custom widget canvas objects here
 func (r *sknLineChartRenderer) Layout(s fyne.Size) {
-	r.widget.propertyLock.RLock()
-	defer r.widget.propertyLock.RUnlock()
+	r.widget.propertyLock.Lock()
+	defer r.widget.propertyLock.Unlock()
 
 	r.xInc = (s.Width - theme.Padding()) / 14.0
 	r.yInc = (s.Height - theme.Padding()) / 14.0
@@ -797,8 +797,8 @@ func (r *sknLineChartRenderer) MinSize() fyne.Size {
 // Objects Return a list of each canvas object.
 // but only the objects that have been enabled or are not at default value; i.e. ""
 func (r *sknLineChartRenderer) Objects() []fyne.CanvasObject {
-	r.widget.propertyLock.RLock()
-	defer r.widget.propertyLock.RUnlock()
+	r.widget.propertyLock.Lock()
+	defer r.widget.propertyLock.Unlock()
 
 	objs := []fyne.CanvasObject{}
 	objs = append(objs, r.widget.objects...)
@@ -892,8 +892,8 @@ func (r *sknLineChartRenderer) Destroy() {}
 // verifyDataPoints Renderer method to inject newly add data series or points
 // called by Refresh() to ensure new data is recognized
 func (r *sknLineChartRenderer) verifyDataPoints() {
-	r.widget.propertyLock.RLock()
-	defer r.widget.propertyLock.RUnlock()
+	r.widget.propertyLock.Lock()
+	defer r.widget.propertyLock.Unlock()
 
 	for key, points := range *r.widget.dataPoints {
 		if nil == r.dataPoints[key] {
