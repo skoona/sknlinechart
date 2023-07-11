@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"github.com/skoona/sknlinechart/pkg/components"
 	"math/rand"
@@ -21,7 +22,7 @@ func main() {
 
 	w.SetOnClosed(func() {
 		windowClosed = true
-		fmt.Println("Window Closed")
+		fmt.Println("::main() Window Closed")
 		time.Sleep(2 * time.Second)
 	})
 
@@ -97,8 +98,8 @@ func main() {
 	})(lineChart)
 
 	w.Resize(fyne.NewSize(1024, 756))
-	w.SetContent(lineChart)
-	//w.SetContent(container.NewPadded(lineChart))
+	//w.SetContent(lineChart)
+	w.SetContent(container.NewPadded(lineChart))
 
 	go func(w *fyne.Window) {
 		systemSignalChannel := make(chan os.Signal, 1)
