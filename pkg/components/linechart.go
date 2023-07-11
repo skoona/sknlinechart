@@ -307,16 +307,15 @@ func (w *LineChartSkn) ReplaceAllDataSeries(newData *map[string][]SknChartDatapo
 		return fmt.Errorf("ReplaceAllDataSeries() no active widget")
 	}
 
-	w.propertyLock.Lock()
-	defer w.propertyLock.Unlock()
-
 	if len(*w.dataPoints) <= len(*newData) {
+		w.propertyLock.Lock()
 		for key, points := range *newData {
 			if len(points) > w.DataPointXLimit {
 				return fmt.Errorf("[%s] data series datapoints limit exceeded. limit:%d, count:%d", key, w.DataPointXLimit, len(points))
 			}
 		}
 		w.dataPoints = newData
+		w.propertyLock.Unlock()
 		w.Refresh()
 	} else {
 		return fmt.Errorf("newData must be larger[%d] than or equal to existing[%d]", len(*newData), len(*w.dataPoints))
@@ -331,11 +330,10 @@ func (w *LineChartSkn) ApplyNewDataSeries(seriesName string, newSeries []SknChar
 		return fmt.Errorf("ApplyNewDataSeries() no active widget")
 	}
 
-	w.propertyLock.Lock()
-	defer w.propertyLock.Unlock()
-
 	if len(newSeries) < w.DataPointXLimit {
+		w.propertyLock.Lock()
 		(*w.dataPoints)[seriesName] = newSeries
+		w.propertyLock.Unlock()
 		w.Refresh()
 	} else {
 		return fmt.Errorf("[%s] data series datapoints limit exceeded. limit:%d, count:%d", seriesName, w.DataPointXLimit, len(newSeries))
@@ -351,13 +349,13 @@ func (w *LineChartSkn) ApplySingleDataPoint(seriesName string, newDataPoint SknC
 	}
 
 	w.propertyLock.Lock()
-	defer w.propertyLock.Unlock()
 
 	if len((*w.dataPoints)[seriesName]) < w.DataPointXLimit {
 		(*w.dataPoints)[seriesName] = append((*w.dataPoints)[seriesName], newDataPoint)
 	} else {
 		(*w.dataPoints)[seriesName] = commons.ShiftSlice(newDataPoint, (*w.dataPoints)[seriesName])
 	}
+	w.propertyLock.Unlock()
 	w.Refresh()
 }
 
@@ -425,9 +423,6 @@ func (w *LineChartSkn) MouseOut() {
 // enableMouseContainer private method to prepare values need by renderer to create pop display
 // composes display text, captures position and colorName for use by renderer
 func (w *LineChartSkn) enableMouseContainer(value, frameColor string, mousePosition *fyne.Position) *LineChartSkn {
-	w.propertyLock.Lock()
-	defer w.propertyLock.Unlock()
-
 	w.mouseDisplayStr = value
 	w.mouseDisplayFrameColor = frameColor
 	ct := canvas.NewText(value, theme.PrimaryColorNamed(frameColor))
@@ -610,8 +605,6 @@ func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
 // theme is changed
 func (r *sknLineChartRenderer) Refresh() {
 	r.verifyDataPoints()
-	r.widget.propertyLock.Lock()
-	defer r.widget.propertyLock.Unlock()
 
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
 	r.mouseDisplayContainer.Objects[1].(*widget.Label).SetText(r.widget.mouseDisplayStr)
@@ -639,6 +632,9 @@ func (r *sknLineChartRenderer) Refresh() {
 		z.TextSize = 12
 		r.rightMiddleBox.Add(z)
 	}
+
+	r.widget.propertyLock.RLock()
+	defer r.widget.propertyLock.RUnlock()
 
 	for _, v := range r.widget.objects {
 		v.Refresh()
