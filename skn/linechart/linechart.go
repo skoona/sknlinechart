@@ -368,8 +368,8 @@ func (w *LineChartSkn) MouseMoved(me *desktop.MouseEvent) {
 		for idx, point := range points {
 			top, bottom := point.MarkerPosition()
 			if !me.Position.IsZero() && !top.IsZero() {
-				if me.Position.X >= top.X && me.Position.X <= bottom.X &&
-					me.Position.Y >= top.Y && me.Position.Y <= bottom.Y {
+				if me.Position.X > top.X && me.Position.X < bottom.X &&
+					me.Position.Y > top.Y && me.Position.Y < bottom.Y {
 					value := fmt.Sprint(" Series: ", key, ", Index: ", idx, ", Value: ", point.Value(), " [ ", point.Timestamp(), " ]")
 					w.enableMouseContainer(value, point.ColorName(), &me.Position).Refresh()
 				}
@@ -729,21 +729,24 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 	r.topRightDesc.Move(fyne.Position{X: (s.Width - ts.Width) - theme.Padding(), Y: ts.Height / 4})
 	r.topLeftDesc.Move(fyne.NewPos(theme.Padding(), ts.Height/4))
 
-	msg := strings.Split(r.mouseDisplayContainer.Objects[1].(*widget.Label).Text, " [ ")
-	ts = fyne.MeasureText(msg[0], 14, r.mouseDisplayContainer.Objects[1].(*widget.Label).TextStyle)
-	r.mouseDisplayContainer.Objects[1].(*widget.Label).Resize(fyne.NewSize(ts.Width-theme.Padding(), (2*ts.Height)+theme.Padding())) // allow room for wrap
-	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).Resize(fyne.NewSize(ts.Width+theme.Padding(), (2*ts.Height)+theme.Padding()))
-	// top edge
-	if r.widget.mouseDisplayPosition.Y < theme.Padding()/6 {
-		r.widget.mouseDisplayPosition.Y = theme.Padding() / 6
-	}
-	// left edge
-	if r.widget.mouseDisplayPosition.X < theme.Padding()/8 {
-		r.widget.mouseDisplayPosition.X = theme.Padding() / 8
-	}
-	// right edge
-	if (r.widget.mouseDisplayPosition.X + ts.Width) > s.Width-(theme.Padding()/4) {
-		r.widget.mouseDisplayPosition.X = s.Width - ts.Width - theme.Padding() - (theme.Padding() / 4)
+	if r.mouseDisplayContainer.Objects[1].(*widget.Label).Text != "" {
+		msg := strings.Split(r.mouseDisplayContainer.Objects[1].(*widget.Label).Text, " [ ")
+		ts = fyne.MeasureText(msg[0], 14, r.mouseDisplayContainer.Objects[1].(*widget.Label).TextStyle)
+
+		r.mouseDisplayContainer.Objects[1].(*widget.Label).Resize(fyne.NewSize(ts.Width-theme.Padding(), (2*ts.Height)+theme.Padding())) // allow room for wrap
+		r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).Resize(fyne.NewSize(ts.Width+theme.Padding(), (2*ts.Height)+theme.Padding()))
+		// top edge
+		if r.widget.mouseDisplayPosition.Y < theme.Padding()/6 {
+			r.widget.mouseDisplayPosition.Y = theme.Padding() / 6
+		}
+		// left edge
+		if r.widget.mouseDisplayPosition.X < theme.Padding()/8 {
+			r.widget.mouseDisplayPosition.X = theme.Padding() / 8
+		}
+		// right edge
+		if (r.widget.mouseDisplayPosition.X + ts.Width) > s.Width-(theme.Padding()/4) {
+			r.widget.mouseDisplayPosition.X = s.Width - ts.Width - theme.Padding() - (theme.Padding() / 4)
+		}
 	}
 	r.mouseDisplayContainer.Move(*r.widget.mouseDisplayPosition)
 
@@ -790,56 +793,76 @@ func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 	objs = append(objs, r.widget.objects...)
 
 	if r.topLeftDesc.Text != "" {
-		r.topLeftDesc.Show()
+		if !r.topLeftDesc.Visible() {
+			r.topLeftDesc.Show()
+		}
 	} else {
 		r.topLeftDesc.Hide()
 	}
 	if r.topCenteredDesc.Text != "" {
-		r.topCenteredDesc.Show()
+		if !r.topCenteredDesc.Visible() {
+			r.topCenteredDesc.Show()
+		}
 	} else {
 		r.topCenteredDesc.Hide()
 	}
 	if r.topRightDesc.Text != "" {
-		r.topRightDesc.Show()
+		if !r.topRightDesc.Visible() {
+			r.topRightDesc.Show()
+		}
 	} else {
 		r.topRightDesc.Hide()
 	}
 	if r.widget.LeftMiddleLabel != "" {
-		r.leftMiddleBox.Show()
+		if !r.leftMiddleBox.Visible() {
+			r.leftMiddleBox.Show()
+		}
 	} else {
 		r.leftMiddleBox.Hide()
 	}
 	if r.widget.RightMiddleLabel != "" {
-		r.rightMiddleBox.Show()
+		if !r.rightMiddleBox.Visible() {
+			r.rightMiddleBox.Show()
+		}
 	} else {
 		r.rightMiddleBox.Hide()
 	}
 	if r.bottomLeftDesc.Text != "" {
-		r.bottomLeftDesc.Show()
+		if !r.bottomLeftDesc.Visible() {
+			r.bottomLeftDesc.Show()
+		}
 	} else {
 		r.bottomLeftDesc.Hide()
 	}
 	if r.bottomCenteredDesc.Text != "" {
-		r.bottomCenteredDesc.Show()
+		if !r.bottomCenteredDesc.Visible() {
+			r.bottomCenteredDesc.Show()
+		}
 	} else {
 		r.bottomCenteredDesc.Hide()
 	}
 	if r.bottomRightDesc.Text != "" {
-		r.bottomRightDesc.Show()
+		if !r.bottomRightDesc.Visible() {
+			r.bottomRightDesc.Show()
+		}
 	} else {
 		r.bottomRightDesc.Hide()
 	}
 
 	for _, line := range r.xLines {
 		if r.widget.EnableHorizGridLines {
-			line.Show()
+			if !line.Visible() {
+				line.Show()
+			}
 		} else {
 			line.Hide()
 		}
 	}
 	for _, line := range r.yLines {
 		if r.widget.EnableVertGridLines {
-			line.Show()
+			if !line.Visible() {
+				line.Show()
+			}
 		} else {
 			line.Hide()
 		}
@@ -851,7 +874,9 @@ func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 			marker := r.dataPointMarkers[key][idx]
 			objs = append(objs, marker)
 			if r.widget.EnableDataPointMarkers {
-				marker.Show()
+				if !marker.Visible() {
+					marker.Show()
+				}
 			} else {
 				marker.Hide()
 			}
@@ -861,7 +886,9 @@ func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 	objs = append(objs, r.mouseDisplayContainer)
 	if r.widget.EnableMousePointDisplay {
 		if r.mouseDisplayContainer.Objects[1].(*widget.Label).Text != "" {
-			r.mouseDisplayContainer.Show()
+			if !r.mouseDisplayContainer.Visible() {
+				r.mouseDisplayContainer.Show()
+			}
 		} else {
 			r.mouseDisplayContainer.Hide()
 		}
