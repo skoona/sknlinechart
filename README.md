@@ -2,8 +2,8 @@
 Line chart with 120 horizontal, xscale, divisions displayed. The Y scale is limited to 100 divisions.  Written in Go using the Fyne GUI framework.
 
 
-[Display Example](https://fyne.io)
-![Display Example](http://github.com/skoona/sknlinechart/sknlinechart.png)
+
+![Display Example](https://github.com/skoona/sknlinechart/sknlinechart.png)
 
 ## Features
 * Multiple Series of datapoints rendered as a single line
