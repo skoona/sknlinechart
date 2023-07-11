@@ -3,7 +3,7 @@ Line chart with 120 horizontal, xscale, divisions displayed. The Y scale is limi
 
 
 
-![Display Example](https://github.com/skoona/sknlinechart/sknlinechart.png)
+![Display Example](https://github.com/skoona/sknlinechart/blob/sknlinechart.png)
 
 ## Features
 * Multiple Series of datapoints rendered as a single line
