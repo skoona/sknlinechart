@@ -7,7 +7,6 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"github.com/skoona/sknlinechart/pkg/commons"
 	"sync"
 )
 
@@ -54,45 +53,6 @@ import (
 	"strings"
 )
 
-// SknLineChart feature list
-type SknLineChart interface {
-	IsDataPointMarkersEnabled() bool // mouse button 2 toggles
-	IsHorizGridLinesEnabled() bool
-	IsVertGridLinesEnabled() bool
-	IsMousePointDisplayEnabled() bool // hoverable and mouse button one
-
-	SetDataPointMarkers(enable bool)
-	SetHorizGridLines(enable bool)
-	SetVertGridLines(enable bool)
-	SetMousePointDisplay(enable bool)
-
-	GetTopLeftLabel() string
-	GetTitle() string
-	GetTopRightLabel() string
-	GetMiddleLeftLabel() string
-	GetMiddleRightLabel() string
-	GetBottomLeftLabel() string
-	GetBottomCenteredLabel() string
-	GetBottomRightLabel() string
-
-	SetTopLeftLabel(newValue string)
-	SetTitle(newValue string)
-	SetTopRightLabel(newValue string)
-	SetMiddleLeftLabel(newValue string)
-	SetMiddleRightLabel(newValue string)
-	SetBottomLeftLabel(newValue string)
-	SetBottomCenteredLabel(newValue string)
-	SetBottomRightLabel(newValue string)
-
-	SetMinSize(s fyne.Size)
-	Refresh()
-	Resize(s fyne.Size)
-
-	ReplaceAllDataSeries(newData *map[string][]SknChartDatapoint) error
-	ApplyNewDataSeries(seriesName string, newSeries []SknChartDatapoint) error
-	ApplySingleDataPoint(seriesName string, newDataPoint SknChartDatapoint)
-}
-
 // LineChartSkn widget to display multiple series of data points
 // which will roll off older point beyond the 120 point limit.
 type LineChartSkn struct {
@@ -130,13 +90,14 @@ var _ SknLineChart = (*LineChartSkn)(nil)
 // can return a valid chart object and an error object; errors really should be handled
 // and are caused by data points exceeding the container limit of 120; they will be truncated
 func NewSknLineChart(topTitle, bottomTitle string, dataPoints *map[string][]SknChartDatapoint) (*LineChartSkn, error) {
+	fmt.Println("::NewSknLineChart()")
 	var err error
 	dpl := 120
 	for key, points := range *dataPoints {
 		if len(points) > dpl {
 			err = fmt.Errorf("%s\nNewSknLineChart() dataPoint contents exceeds the point count limit[Action: truncated leading]. Series: %s, points: %d, Limit: %d", err, key, len(points), dpl)
 			for len(points) > dpl {
-				points = commons.RemoveIndexFromSlice(0, points)
+				points = RemoveIndexFromSlice(0, points)
 			}
 			(*dataPoints)[key] = points
 			err = fmt.Errorf("%s\n NewSknLineChart() dataPoint contents exceeds the point count limit[Action: truncated leading]. Series: %s, points: %d, Limit: %d", err.Error(), key, len(points), dpl)
@@ -172,6 +133,7 @@ func NewSknLineChart(topTitle, bottomTitle string, dataPoints *map[string][]SknC
 
 // CreateRenderer Create the renderer. This is called by the fyne application
 func (w *LineChartSkn) CreateRenderer() fyne.WidgetRenderer {
+	fmt.Println("LineChartSkn::CreateRenderer()")
 	return newSknLineChartRenderer(w)
 }
 
@@ -300,34 +262,13 @@ func (w *LineChartSkn) SetMousePointDisplay(enable bool) {
 	w.EnableMousePointDisplay = enable
 }
 
-// ReplaceAllDataSeries replaces all the chart's series data
-// throws an error if any series exceeds the container limit
-func (w *LineChartSkn) ReplaceAllDataSeries(newData *map[string][]SknChartDatapoint) error {
-	if w.dataPoints == nil {
-		return fmt.Errorf("ReplaceAllDataSeries() no active widget")
-	}
-
-	if len(*w.dataPoints) <= len(*newData) {
-		w.propertyLock.Lock()
-		for key, points := range *newData {
-			if len(points) > w.DataPointXLimit {
-				return fmt.Errorf("[%s] data series datapoints limit exceeded. limit:%d, count:%d", key, w.DataPointXLimit, len(points))
-			}
-		}
-		w.dataPoints = newData
-		w.propertyLock.Unlock()
-		w.Refresh()
-	} else {
-		return fmt.Errorf("newData must be larger[%d] than or equal to existing[%d]", len(*newData), len(*w.dataPoints))
-	}
-	return nil
-}
-
-// ApplyNewDataSeries adds a new series of data to existing chart set.
+// ApplyDataSeries adds a new series of data to existing chart set.
 // throws error if new series exceeds containers point limit
-func (w *LineChartSkn) ApplyNewDataSeries(seriesName string, newSeries []SknChartDatapoint) error {
+func (w *LineChartSkn) ApplyDataSeries(seriesName string, newSeries []SknChartDatapoint) error {
+	fmt.Println("LineChartSkn::ApplyDataSeries() ENTER")
 	if w == nil {
-		return fmt.Errorf("ApplyNewDataSeries() no active widget")
+		fmt.Println("LineChartSkn::ApplyDataSeries() ERROR EXIT")
+		return fmt.Errorf("ApplyDataSeries() no active widget")
 	}
 
 	if len(newSeries) < w.DataPointXLimit {
@@ -336,14 +277,17 @@ func (w *LineChartSkn) ApplyNewDataSeries(seriesName string, newSeries []SknChar
 		w.propertyLock.Unlock()
 		w.Refresh()
 	} else {
+		fmt.Println("LineChartSkn::ApplyDataSeries() ERROR EXIT")
 		return fmt.Errorf("[%s] data series datapoints limit exceeded. limit:%d, count:%d", seriesName, w.DataPointXLimit, len(newSeries))
 	}
+	fmt.Println("LineChartSkn::ApplyDataSeries() EXIT")
 	return nil
 }
 
-// ApplySingleDataPoint adds a new datapoint to an existing series
+// ApplyDataPoint adds a new datapoint to an existing series
 // will shift out the oldest point if containers limit is exceeded
-func (w *LineChartSkn) ApplySingleDataPoint(seriesName string, newDataPoint SknChartDatapoint) {
+func (w *LineChartSkn) ApplyDataPoint(seriesName string, newDataPoint SknChartDatapoint) {
+	fmt.Println("LineChartSkn::ApplyDataPoint() ENTER")
 	if w == nil {
 		return
 	}
@@ -353,34 +297,44 @@ func (w *LineChartSkn) ApplySingleDataPoint(seriesName string, newDataPoint SknC
 	if len((*w.dataPoints)[seriesName]) < w.DataPointXLimit {
 		(*w.dataPoints)[seriesName] = append((*w.dataPoints)[seriesName], newDataPoint)
 	} else {
-		(*w.dataPoints)[seriesName] = commons.ShiftSlice(newDataPoint, (*w.dataPoints)[seriesName])
+		(*w.dataPoints)[seriesName] = ShiftSlice(newDataPoint, (*w.dataPoints)[seriesName])
 	}
+
 	w.propertyLock.Unlock()
-	//w.Refresh()
+	w.Refresh()
+	fmt.Println("LineChartSkn::ApplyDataPoint() EXIT")
 }
 
 // MinSize Create a minimum size for the widget.
 // The smallest size is can be overridden by user
 // also in renderer
 func (w *LineChartSkn) MinSize() fyne.Size {
+	fmt.Println("LineChartSkn::MinSize() ENTER")
 	w.ExtendBaseWidget(w)
-	return w.BaseWidget.MinSize()
+	val := w.BaseWidget.MinSize()
+	fmt.Println("LineChartSkn::MinSize() EXIT")
+	return val
 }
 
 // Refresh triggers a redraw
 func (w *LineChartSkn) Refresh() {
+	fmt.Println("LineChartSkn::Refresh() ENTER")
 	w.ExtendBaseWidget(w)
 	w.BaseWidget.Refresh()
+	fmt.Println("LineChartSkn::Refresh() EXIT")
 }
 
 // Resize sets a new size for the label.
 // This should only be called if it is not in a container with a layout manager.
 func (w *LineChartSkn) Resize(s fyne.Size) {
+	fmt.Println("LineChartSkn::Resize() ENTER")
 	w.BaseWidget.Resize(s)
+	fmt.Println("LineChartSkn::Resize() EXIT")
 }
 
 // MouseDown btn.2 toggles markers, btn.1 toggles mouse point display
 func (w *LineChartSkn) MouseDown(me *desktop.MouseEvent) {
+	fmt.Println("LineChartSkn::MouseDown() ENTER")
 	if me.Button == desktop.MouseButtonSecondary {
 		w.EnableDataPointMarkers = !w.EnableDataPointMarkers
 		w.Refresh()
@@ -388,16 +342,22 @@ func (w *LineChartSkn) MouseDown(me *desktop.MouseEvent) {
 		w.EnableMousePointDisplay = !w.EnableMousePointDisplay
 		w.Refresh()
 	}
+	fmt.Println("LineChartSkn::MouseDown() EXIT")
 }
 
 // MouseUp unused interface method
-func (w *LineChartSkn) MouseUp(*desktop.MouseEvent) {}
+func (w *LineChartSkn) MouseUp(*desktop.MouseEvent) {
+	fmt.Println("LineChartSkn::MouseUP()")
+}
 
 // MouseIn unused interface method
-func (w *LineChartSkn) MouseIn(*desktop.MouseEvent) {}
+func (w *LineChartSkn) MouseIn(*desktop.MouseEvent) {
+	fmt.Println("LineChartSkn::MouseIn()")
+}
 
 // MouseMoved interface method to discover which data point is under mouse
 func (w *LineChartSkn) MouseMoved(me *desktop.MouseEvent) {
+	fmt.Println("LineChartSkn::MouseMoved()")
 	if !w.EnableMousePointDisplay {
 		return
 	}
@@ -417,12 +377,14 @@ func (w *LineChartSkn) MouseMoved(me *desktop.MouseEvent) {
 
 // MouseOut disable display of mouse data point display
 func (w *LineChartSkn) MouseOut() {
+	fmt.Println("LineChartSkn::MouseOut()")
 	w.disableMouseContainer()
 }
 
 // enableMouseContainer private method to prepare values need by renderer to create pop display
 // composes display text, captures position and colorName for use by renderer
 func (w *LineChartSkn) enableMouseContainer(value, frameColor string, mousePosition *fyne.Position) *LineChartSkn {
+	fmt.Println("LineChartSkn::enableMouseContainer() ENTER")
 	w.mouseDisplayStr = value
 	w.mouseDisplayFrameColor = frameColor
 	ct := canvas.NewText(value, theme.PrimaryColorNamed(frameColor))
@@ -430,12 +392,14 @@ func (w *LineChartSkn) enableMouseContainer(value, frameColor string, mousePosit
 	ts := fyne.MeasureText(parts[0], ct.TextSize, ct.TextStyle)
 	mp := &fyne.Position{X: mousePosition.X - (ts.Width / 2), Y: mousePosition.Y - (3 * ts.Height) - theme.Padding()}
 	w.mouseDisplayPosition = mp
+	fmt.Println("LineChartSkn::enableMouseContainer() EXIT")
 	return w
 }
 
 // disableMouseContainer private method to manage mouse leaving window
 // blank string will prevent display
 func (w *LineChartSkn) disableMouseContainer() {
+	fmt.Println("LineChartSkn::disableMouseContainer()")
 	w.mouseDisplayStr = ""
 	w.Refresh()
 }
@@ -470,6 +434,7 @@ var _ fyne.WidgetRenderer = (*sknLineChartRenderer)(nil)
 //
 // Note: Do not size or move canvas objects here.
 func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
+	fmt.Println("::newSknLineChartRenderer() ENTER")
 	lineChart.ExtendBaseWidget(lineChart)
 	lineChart.propertyLock.Lock()
 	defer lineChart.propertyLock.Unlock()
@@ -577,8 +542,10 @@ func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
 	br := canvas.NewText(lineChart.BottomRightLabel, theme.ForegroundColor())
 	objs = append(objs, tl, tr, bl, br)
 
-	// save all except datapints, markers, and mouse box
+	// save all except data points, markers, and mouse box
 	lineChart.objects = append(lineChart.objects, objs...)
+
+	fmt.Println("::newSknLineChartRenderer() EXIT")
 
 	return &sknLineChartRenderer{
 		widget:                lineChart,
@@ -604,6 +571,7 @@ func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
 // Refresh method is called if the state of the widget changes or the
 // theme is changed
 func (r *sknLineChartRenderer) Refresh() {
+	fmt.Println("sknLineChartRenderer::Refresh() ENTER")
 	r.verifyDataPoints()
 
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
@@ -651,11 +619,13 @@ func (r *sknLineChartRenderer) Refresh() {
 	}
 
 	r.mouseDisplayContainer.Refresh()
+	fmt.Println("sknLineChartRenderer::Refresh() EXIT")
 }
 
 // Layout Given the size required by the fyne application
 // move and re-size the all custom widget canvas objects here
 func (r *sknLineChartRenderer) Layout(s fyne.Size) {
+	fmt.Println("sknLineChartRenderer::Layout() ENTER")
 	r.widget.propertyLock.Lock()
 	defer r.widget.propertyLock.Unlock()
 
@@ -698,6 +668,7 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 	dp := float32(1.0)
 	for key, data := range *r.widget.dataPoints { // datasource
 		lastPoint := fyne.NewPos(xp, yp)
+
 		for idx, point := range data { // one set of lines
 			if point.Value() > r.widget.dataPointScale.Height {
 				dp = r.widget.dataPointScale.Height
@@ -712,6 +683,7 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 			if idx == 0 {
 				lastPoint.Y = yy
 			}
+
 			dpv := r.dataPoints[key][idx]
 			dpv.Position1 = thisPoint
 			dpv.Position2 = lastPoint
@@ -781,18 +753,22 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 	r.bottomRightDesc.Move(fyne.NewPos((s.Width-ts.Width)-theme.Padding(), s.Height-ts.Height-theme.Padding()))
 	r.bottomLeftDesc.Move(fyne.NewPos(theme.Padding()+2.0, s.Height-ts.Height-theme.Padding()))
 
+	fmt.Println("sknLineChartRenderer::Layout() EXIT")
 }
 
 // MinSize Create a minimum size for the widget.
 // The smallest size is can be overridden by user
 func (r *sknLineChartRenderer) MinSize() fyne.Size {
+	fmt.Println("sknLineChartRenderer::MinSize() ENTER")
 	r.widget.ExtendBaseWidget(r.widget)
+	fmt.Println("sknLineChartRenderer::MinSize() EXIT")
 	return fyne.NewSize(r.widget.minSize.Width, r.widget.minSize.Height)
 }
 
 // Objects Return a list of each canvas object.
 // but only the objects that have been enabled or are not at default value; i.e. ""
 func (r *sknLineChartRenderer) Objects() []fyne.CanvasObject {
+	fmt.Println("sknLineChartRenderer::Objects() ENTER")
 	r.widget.propertyLock.Lock()
 	defer r.widget.propertyLock.Unlock()
 
@@ -878,16 +854,19 @@ func (r *sknLineChartRenderer) Objects() []fyne.CanvasObject {
 	} else {
 		r.mouseDisplayContainer.Hide()
 	}
-
+	fmt.Println("sknLineChartRenderer::Objects() EXIT")
 	return objs
 }
 
 // Destroy Cleanup if resources have been allocated
-func (r *sknLineChartRenderer) Destroy() {}
+func (r *sknLineChartRenderer) Destroy() {
+	fmt.Println("sknLineChartRenderer::Destroy()")
+}
 
 // verifyDataPoints Renderer method to inject newly add data series or points
 // called by Refresh() to ensure new data is recognized
 func (r *sknLineChartRenderer) verifyDataPoints() {
+	fmt.Println("sknLineChartRenderer::VerifyDataPoints() ENTER")
 	r.widget.propertyLock.Lock()
 	defer r.widget.propertyLock.Unlock()
 
@@ -907,4 +886,5 @@ func (r *sknLineChartRenderer) verifyDataPoints() {
 			}
 		}
 	}
+	fmt.Println("sknLineChartRenderer::VerifyDataPoints() EXIT")
 }

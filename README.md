@@ -52,10 +52,9 @@ type SknLineChart interface {
 	SetBottomRightLabel(newValue string)
 
 	SetMinSize(s fyne.Size)
-
-	ReplaceAllDataSeries(newData *map[string][]SknChartDatapoint) error
-	ApplyNewDataSeries(seriesName string, newSeries []SknChartDatapoint) error
-	ApplySingleDataPoint(seriesName string, newDataPoint SknChartDatapoint)
+	
+	ApplyDataSeries(seriesName string, newSeries []SknChartDatapoint) error
+	ApplyDataPoint(seriesName string, newDataPoint SknChartDatapoint)
 }
 ```
 
@@ -179,7 +178,7 @@ func main() {
 
 	go (func(chart components.SknLineChart) {
 		time.Sleep(10 * time.Second)
-		err = lineChart.ApplyNewDataSeries("many", many)
+		err = lineChart.ApplyDataSeries("many", many)
 		if err != nil {
 			fmt.Println("ApplyNewDataSeries", err.Error())
 		}
@@ -187,7 +186,7 @@ func main() {
 			if windowClosed {
 				break
 			}
-			chart.ApplySingleDataPoint("steady", components.NewSknDatapoint(
+			chart.ApplyDataPoint("steady", components.NewSknDatapoint(
 				rand.Float32()*110.0,
 				theme.ColorYellow,
 				time.Now().Format(time.RFC3339)))
@@ -227,9 +226,8 @@ func main() {
 ├── go.mod
 ├── go.sum
 └── pkg
-    ├── commons
-    │   └── mapsliceutils.go
     └── components
+        ├── mapsliceutils.go
         ├── datapoint.go
         └── linechart.go
 

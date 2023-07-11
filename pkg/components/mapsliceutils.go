@@ -1,4 +1,4 @@
-package commons
+package components
 
 // RemoveIndexFromSlice remove the given index from any type of slice
 func RemoveIndexFromSlice[K comparable](index int, slice []K) []K {
@@ -21,16 +21,4 @@ func ShiftSlice[K comparable](newData K, slice []K) []K {
 	shorter := append(slice[:idx], slice[idx+1:]...)
 	shorter = append(shorter, newData)
 	return shorter
-}
-
-// MapKeys returns a slice of the keys in a map
-//
-// []K := MapKeys(m)
-// []K := MapKeys[int, string](m)
-func MapKeys[K comparable, V any](m map[K]V) []K {
-	r := make([]K, 0, len(m))
-	for k := range m {
-		r = append(r, k)
-	}
-	return r
 }
