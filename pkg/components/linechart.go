@@ -306,6 +306,10 @@ func (w *LineChartSkn) ReplaceAllDataSeries(newData *map[string][]SknChartDatapo
 	if w.dataPoints == nil {
 		return fmt.Errorf("ReplaceAllDataSeries() no active widget")
 	}
+
+	w.propertyLock.RLock()
+	defer w.propertyLock.RUnlock()
+
 	if len(*w.dataPoints) <= len(*newData) {
 		for key, points := range *newData {
 			if len(points) > w.DataPointXLimit {
@@ -327,6 +331,9 @@ func (w *LineChartSkn) ApplyNewDataSeries(seriesName string, newSeries []SknChar
 		return fmt.Errorf("ApplyNewDataSeries() no active widget")
 	}
 
+	w.propertyLock.RLock()
+	defer w.propertyLock.RUnlock()
+
 	if len(newSeries) < w.DataPointXLimit {
 		(*w.dataPoints)[seriesName] = newSeries
 		w.Refresh()
@@ -342,6 +349,10 @@ func (w *LineChartSkn) ApplySingleDataPoint(seriesName string, newDataPoint SknC
 	if w == nil {
 		return
 	}
+
+	w.propertyLock.RLock()
+	defer w.propertyLock.RUnlock()
+
 	if len((*w.dataPoints)[seriesName]) < w.DataPointXLimit {
 		(*w.dataPoints)[seriesName] = append((*w.dataPoints)[seriesName], newDataPoint)
 	} else {
