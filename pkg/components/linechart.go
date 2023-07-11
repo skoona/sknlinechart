@@ -414,6 +414,9 @@ func (w *LineChartSkn) MouseOut() {
 // enableMouseContainer private method to prepare values need by renderer to create pop display
 // composes display text, captures position and colorName for use by renderer
 func (w *LineChartSkn) enableMouseContainer(value, frameColor string, mousePosition *fyne.Position) *LineChartSkn {
+	w.propertyLock.RLock()
+	defer w.propertyLock.RUnlock()
+
 	w.mouseDisplayStr = value
 	w.mouseDisplayFrameColor = frameColor
 	ct := canvas.NewText(value, theme.PrimaryColorNamed(frameColor))
