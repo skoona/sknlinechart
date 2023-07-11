@@ -356,7 +356,7 @@ func (w *LineChartSkn) ApplySingleDataPoint(seriesName string, newDataPoint SknC
 		(*w.dataPoints)[seriesName] = commons.ShiftSlice(newDataPoint, (*w.dataPoints)[seriesName])
 	}
 	w.propertyLock.Unlock()
-	w.Refresh()
+	//w.Refresh()
 }
 
 // MinSize Create a minimum size for the widget.
