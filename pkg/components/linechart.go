@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/skoona/sknlinechart/pkg/commons"
+	"sync"
 )
 
 /*
@@ -84,6 +85,8 @@ type SknLineChart interface {
 	SetBottomRightLabel(newValue string)
 
 	SetMinSize(s fyne.Size)
+	Refresh()
+	Resize(s fyne.Size)
 
 	ReplaceAllDataSeries(newData *map[string][]SknChartDatapoint) error
 	ApplyNewDataSeries(seriesName string, newSeries []SknChartDatapoint) error
@@ -116,6 +119,7 @@ type LineChartSkn struct {
 	dataPointScale          fyne.Size
 	minSize                 fyne.Size
 	objects                 []fyne.CanvasObject
+	propertyLock            sync.RWMutex
 }
 
 var _ SknLineChart = (*LineChartSkn)(nil)
@@ -158,9 +162,9 @@ func NewSknLineChart(topTitle, bottomTitle string, dataPoints *map[string][]SknC
 		BottomLeftLabel:         "bottom left desc",
 		BottomCenteredLabel:     bottomTitle,
 		BottomRightLabel:        "bottom right desc",
-		minSize:                 fyne.NewSize(400+theme.Padding()*4, 300+theme.Padding()*4),
+		minSize:                 fyne.NewSize(420+theme.Padding()*4, 315+theme.Padding()*4),
 		objects:                 []fyne.CanvasObject{}, // everything except datapoints, markers, and mousebox
-
+		propertyLock:            sync.RWMutex{},
 	}
 	w.ExtendBaseWidget(w) // Initialize the BaseWidget
 	return w, err
@@ -168,7 +172,6 @@ func NewSknLineChart(topTitle, bottomTitle string, dataPoints *map[string][]SknC
 
 // CreateRenderer Create the renderer. This is called by the fyne application
 func (w *LineChartSkn) CreateRenderer() fyne.WidgetRenderer {
-	w.ExtendBaseWidget(w)
 	return newSknLineChartRenderer(w)
 }
 
@@ -352,8 +355,19 @@ func (w *LineChartSkn) ApplySingleDataPoint(seriesName string, newDataPoint SknC
 // also in renderer
 func (w *LineChartSkn) MinSize() fyne.Size {
 	w.ExtendBaseWidget(w)
-	//return fyne.NewSize(w.minSize.Width, w.minSize.Height)
 	return w.BaseWidget.MinSize()
+}
+
+// Refresh triggers a redraw
+func (w *LineChartSkn) Refresh() {
+	w.ExtendBaseWidget(w)
+	w.BaseWidget.Refresh()
+}
+
+// Resize sets a new size for the label.
+// This should only be called if it is not in a container with a layout manager.
+func (w *LineChartSkn) Resize(s fyne.Size) {
+	w.BaseWidget.Resize(s)
 }
 
 // MouseDown btn.2 toggles markers, btn.1 toggles mouse point display
@@ -447,6 +461,10 @@ var _ fyne.WidgetRenderer = (*sknLineChartRenderer)(nil)
 //
 // Note: Do not size or move canvas objects here.
 func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
+	lineChart.ExtendBaseWidget(lineChart)
+	lineChart.propertyLock.RLock()
+	defer lineChart.propertyLock.RUnlock()
+
 	objs := []fyne.CanvasObject{}
 
 	background := canvas.NewRectangle(color.Transparent)
@@ -578,6 +596,8 @@ func newSknLineChartRenderer(lineChart *LineChartSkn) *sknLineChartRenderer {
 // theme is changed
 func (r *sknLineChartRenderer) Refresh() {
 	r.verifyDataPoints()
+	r.widget.propertyLock.RLock()
+	defer r.widget.propertyLock.RUnlock()
 
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
 	r.mouseDisplayContainer.Objects[1].(*widget.Label).SetText(r.widget.mouseDisplayStr)
@@ -618,6 +638,9 @@ func (r *sknLineChartRenderer) Refresh() {
 // Layout Given the size required by the fyne application
 // move and re-size the all custom widget canvas objects here
 func (r *sknLineChartRenderer) Layout(s fyne.Size) {
+	r.widget.propertyLock.RLock()
+	defer r.widget.propertyLock.RUnlock()
+
 	r.xInc = (s.Width - theme.Padding()) / 14.0
 	r.yInc = (s.Height - theme.Padding()) / 14.0
 
@@ -745,12 +768,16 @@ func (r *sknLineChartRenderer) Layout(s fyne.Size) {
 // MinSize Create a minimum size for the widget.
 // The smallest size is can be overridden by user
 func (r *sknLineChartRenderer) MinSize() fyne.Size {
+	r.widget.ExtendBaseWidget(r.widget)
 	return fyne.NewSize(r.widget.minSize.Width, r.widget.minSize.Height)
 }
 
 // Objects Return a list of each canvas object.
 // but only the objects that have been enabled or are not at default value; i.e. ""
 func (r *sknLineChartRenderer) Objects() []fyne.CanvasObject {
+	r.widget.propertyLock.RLock()
+	defer r.widget.propertyLock.RUnlock()
+
 	objs := []fyne.CanvasObject{}
 	objs = append(objs, r.widget.objects...)
 
@@ -843,6 +870,9 @@ func (r *sknLineChartRenderer) Destroy() {}
 // verifyDataPoints Renderer method to inject newly add data series or points
 // called by Refresh() to ensure new data is recognized
 func (r *sknLineChartRenderer) verifyDataPoints() {
+	r.widget.propertyLock.RLock()
+	defer r.widget.propertyLock.RUnlock()
+
 	for key, points := range *r.widget.dataPoints {
 		if nil == r.dataPoints[key] {
 			r.dataPoints[key] = []*canvas.Line{}
