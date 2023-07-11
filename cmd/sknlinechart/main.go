@@ -97,7 +97,7 @@ func main() {
 		}
 	})(lineChart)
 
-	w.Resize(fyne.NewSize(1024, 756))
+	w.Resize(fyne.NewSize(982, 452))
 	//w.SetContent(lineChart)
 	w.SetContent(container.NewPadded(lineChart))
 
@@ -111,5 +111,5 @@ func main() {
 	}(&w)
 
 	w.ShowAndRun()
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 }

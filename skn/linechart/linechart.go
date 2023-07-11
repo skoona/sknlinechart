@@ -368,8 +368,8 @@ func (w *LineChartSkn) MouseMoved(me *desktop.MouseEvent) {
 		for idx, point := range points {
 			top, bottom := point.MarkerPosition()
 			if !me.Position.IsZero() && !top.IsZero() {
-				if me.Position.X > top.X && me.Position.X < bottom.X &&
-					me.Position.Y > top.Y && me.Position.Y < bottom.Y {
+				if me.Position.X >= top.X && me.Position.X <= bottom.X &&
+					me.Position.Y >= top.Y && me.Position.Y <= bottom.Y {
 					value := fmt.Sprint(" Series: ", key, ", Index: ", idx, ", Value: ", point.Value(), " [ ", point.Timestamp(), " ]")
 					w.enableMouseContainer(value, point.ColorName(), &me.Position).Refresh()
 				}
@@ -579,10 +579,8 @@ func (r *lineChartRenderer) Refresh() {
 		r.verifyDataPoints()
 	}
 
-	if strings.Compare(r.widget.mouseDisplayStr, r.mouseDisplayContainer.Objects[1].(*widget.Label).Text) != 0 {
-		r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
-		r.mouseDisplayContainer.Objects[1].(*widget.Label).SetText(r.widget.mouseDisplayStr)
-	}
+	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
+	r.mouseDisplayContainer.Objects[1].(*widget.Label).SetText(r.widget.mouseDisplayStr)
 
 	r.topLeftDesc.Text = r.widget.TopLeftLabel
 	r.topCenteredDesc.Text = r.widget.TopCenteredLabel
@@ -703,10 +701,10 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 			dpv.Position2 = lastPoint
 			lastPoint = thisPoint
 
-			zt := fyne.NewPos(thisPoint.X-2, thisPoint.Y-2)
+			zt := fyne.NewPos(thisPoint.X-3, thisPoint.Y-3)
 			dpm := r.dataPointMarkers[key][idx]
 			dpm.Position1 = zt
-			zb := fyne.NewPos(thisPoint.X+2, thisPoint.Y+2)
+			zb := fyne.NewPos(thisPoint.X+3, thisPoint.Y+3)
 			dpm.Position2 = zb
 			point.SetMarkerPosition(&zt, &zb)
 			dpm.Resize(fyne.NewSize(5, 5))
@@ -729,24 +727,22 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 	r.topRightDesc.Move(fyne.Position{X: (s.Width - ts.Width) - theme.Padding(), Y: ts.Height / 4})
 	r.topLeftDesc.Move(fyne.NewPos(theme.Padding(), ts.Height/4))
 
-	if r.mouseDisplayContainer.Objects[1].(*widget.Label).Text != "" {
-		msg := strings.Split(r.mouseDisplayContainer.Objects[1].(*widget.Label).Text, " [ ")
-		ts = fyne.MeasureText(msg[0], 14, r.mouseDisplayContainer.Objects[1].(*widget.Label).TextStyle)
+	msg := strings.Split(r.mouseDisplayContainer.Objects[1].(*widget.Label).Text, " [ ")
+	ts = fyne.MeasureText(msg[0], 14, r.mouseDisplayContainer.Objects[1].(*widget.Label).TextStyle)
 
-		r.mouseDisplayContainer.Objects[1].(*widget.Label).Resize(fyne.NewSize(ts.Width-theme.Padding(), (2*ts.Height)+theme.Padding())) // allow room for wrap
-		r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).Resize(fyne.NewSize(ts.Width+theme.Padding(), (2*ts.Height)+theme.Padding()))
-		// top edge
-		if r.widget.mouseDisplayPosition.Y < theme.Padding()/6 {
-			r.widget.mouseDisplayPosition.Y = theme.Padding() / 6
-		}
-		// left edge
-		if r.widget.mouseDisplayPosition.X < theme.Padding()/8 {
-			r.widget.mouseDisplayPosition.X = theme.Padding() / 8
-		}
-		// right edge
-		if (r.widget.mouseDisplayPosition.X + ts.Width) > s.Width-(theme.Padding()/4) {
-			r.widget.mouseDisplayPosition.X = s.Width - ts.Width - theme.Padding() - (theme.Padding() / 4)
-		}
+	r.mouseDisplayContainer.Objects[1].(*widget.Label).Resize(fyne.NewSize(ts.Width-theme.Padding(), (2*ts.Height)+theme.Padding())) // allow room for wrap
+	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).Resize(fyne.NewSize(ts.Width+theme.Padding(), (2*ts.Height)+theme.Padding()))
+	// top edge
+	if r.widget.mouseDisplayPosition.Y < theme.Padding()/6 {
+		r.widget.mouseDisplayPosition.Y = theme.Padding() / 6
+	}
+	// left edge
+	if r.widget.mouseDisplayPosition.X < theme.Padding()/8 {
+		r.widget.mouseDisplayPosition.X = theme.Padding() / 8
+	}
+	// right edge
+	if (r.widget.mouseDisplayPosition.X + ts.Width) > s.Width-(theme.Padding()/4) {
+		r.widget.mouseDisplayPosition.X = s.Width - ts.Width - theme.Padding() - (theme.Padding() / 4)
 	}
 	r.mouseDisplayContainer.Move(*r.widget.mouseDisplayPosition)
 
