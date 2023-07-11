@@ -1,8 +1,6 @@
 # SknLineChart
 Line chart with 120 horizontal, xscale, divisions displayed. The Y scale is limited to 100 divisions.  Written in Go using the Fyne GUI framework.
 
-
-
 ![Display Example](sknlinechart.png)
 
 ## Features
@@ -99,10 +97,6 @@ type SknLineChart interface {
  * - if using maps, map[string]interface{}, they will require a mutex to prevent concurrency error cause my concurrent read/writes.
  * - data binding creates new var from source var, and its the new var that should be shared as it is synchronized to changes in bond data var.
  */
- */
- */
- */
- */
 ```
 
 
@@ -114,8 +108,9 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
-	"github.com/skoona/sknlinechart/pkg/components"
+	"github.com/skoona/sknlinechart/skn/linechart"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -126,17 +121,17 @@ import (
 func main() {
 	windowClosed := false
 
-	gui := app.NewWithID("net.skoona.mq2influx")
+	gui := app.NewWithID("net.skoona.sknLineChart")
 	w := gui.NewWindow("Custom Widget Development")
 
 	w.SetOnClosed(func() {
 		windowClosed = true
-		fmt.Println("Window Closed")
+		fmt.Println("::main() Window Closed")
 		time.Sleep(2 * time.Second)
 	})
 
-	dataPoints := map[string][]components.SknChartDatapoint{} // legend, points
-	var first, second, many []components.SknChartDatapoint
+	dataPoints := map[string][]linechart.LineChartDatapoint{} // legend, points
+	var first, second, many []linechart.LineChartDatapoint
 
 	rand.NewSource(50.0)
 	for x := 1; x < 125; x++ {
@@ -146,7 +141,7 @@ func main() {
 		} else if val < 5.0 {
 			val = 5.0
 		}
-		first = append(first, components.NewSknDatapoint(
+		first = append(first, linechart.NewLineChartDatapoint(
 			val,
 			theme.ColorOrange,
 			time.Now().Format(time.RFC3339)))
@@ -158,7 +153,7 @@ func main() {
 		} else if val < 35.0 {
 			val = 35.0
 		}
-		second = append(second, components.NewSknDatapoint(
+		second = append(second, linechart.NewLineChartDatapoint(
 			val,
 			theme.ColorRed,
 			time.Now().Format(time.RFC3339)))
@@ -170,7 +165,7 @@ func main() {
 		} else if val < 65.0 {
 			val = 65.0
 		}
-		many = append(many, components.NewSknDatapoint(
+		many = append(many, linechart.NewLineChartDatapoint(
 			val,
 			theme.ColorPurple,
 			time.Now().Format(time.RFC3339)))
@@ -179,12 +174,12 @@ func main() {
 	dataPoints["first"] = first
 	dataPoints["second"] = second
 
-	lineChart, err := components.NewSknLineChart("Skoona Line Chart", "Example Time Series", &dataPoints)
+	lineChart, err := linechart.NewLineChart("Skoona Line Chart", "Example Time Series", &dataPoints)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
-	go (func(chart components.SknLineChart) {
+	go (func(chart linechart.LineChart) {
 		time.Sleep(10 * time.Second)
 		err = lineChart.ApplyDataSeries("many", many)
 		if err != nil {
@@ -195,7 +190,7 @@ func main() {
 			if windowClosed {
 				break
 			}
-			chart.ApplyDataPoint("steady", components.NewSknDatapoint(
+			chart.ApplyDataPoint("steady", linechart.NewLineChartDatapoint(
 				rand.Float32()*110.0,
 				theme.ColorYellow,
 				time.Now().Format(time.RFC3339)))
@@ -207,8 +202,8 @@ func main() {
 	})(lineChart)
 
 	w.Resize(fyne.NewSize(1024, 756))
-	w.SetContent(lineChart)
-	//w.SetContent(container.NewPadded(lineChart))
+	//w.SetContent(lineChart)
+	w.SetContent(container.NewPadded(lineChart))
 
 	go func(w *fyne.Window) {
 		systemSignalChannel := make(chan os.Signal, 1)
@@ -234,11 +229,12 @@ func main() {
 │       └── main.go
 ├── go.mod
 ├── go.sum
-└── pkg
-    └── components
-        ├── mapsliceutils.go
+└── skn
+    └── linechart
         ├── datapoint.go
-        └── linechart.go
+        ├── interfaces.go
+        ├── linechart.go
+        └── mapsliceutils.go
 
 ```
 

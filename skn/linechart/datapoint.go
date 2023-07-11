@@ -1,11 +1,11 @@
-package components
+package linechart
 
 import (
 	"fyne.io/fyne/v2"
 )
 
-// SknChartDatapoint data container interface for SknLineChart
-type SknChartDatapoint interface {
+// LineChartDatapoint data container interface for LineChart
+type LineChartDatapoint interface {
 	Value() float32
 	SetValue(y float32)
 
@@ -21,7 +21,7 @@ type SknChartDatapoint interface {
 	SetMarkerPosition(top *fyne.Position, bottom *fyne.Position)
 }
 
-type sknDatapoint struct {
+type lineChartDatapoint struct {
 	value                float32
 	markerTopPosition    *fyne.Position
 	markerBottomPosition *fyne.Position
@@ -29,8 +29,8 @@ type sknDatapoint struct {
 	timestamp            string
 }
 
-func NewSknDatapoint(value float32, colorName, timestamp string) SknChartDatapoint {
-	return &sknDatapoint{
+func NewLineChartDatapoint(value float32, colorName, timestamp string) LineChartDatapoint {
+	return &lineChartDatapoint{
 		value:                value,
 		colorName:            colorName,
 		timestamp:            timestamp,
@@ -38,28 +38,28 @@ func NewSknDatapoint(value float32, colorName, timestamp string) SknChartDatapoi
 		markerBottomPosition: &fyne.Position{},
 	}
 }
-func (d *sknDatapoint) Value() float32 {
+func (d *lineChartDatapoint) Value() float32 {
 	return d.value
 }
-func (d *sknDatapoint) MarkerPosition() (*fyne.Position, *fyne.Position) {
+func (d *lineChartDatapoint) MarkerPosition() (*fyne.Position, *fyne.Position) {
 	return d.markerTopPosition, d.markerBottomPosition
 }
-func (d *sknDatapoint) ColorName() string {
+func (d *lineChartDatapoint) ColorName() string {
 	return d.colorName
 }
-func (d *sknDatapoint) Timestamp() string {
+func (d *lineChartDatapoint) Timestamp() string {
 	return d.timestamp
 }
-func (d *sknDatapoint) SetValue(v float32) {
+func (d *lineChartDatapoint) SetValue(v float32) {
 	(*d).value = v
 }
-func (d *sknDatapoint) SetMarkerPosition(top *fyne.Position, bottom *fyne.Position) {
+func (d *lineChartDatapoint) SetMarkerPosition(top *fyne.Position, bottom *fyne.Position) {
 	(*d).markerTopPosition = top
 	(*d).markerBottomPosition = bottom
 }
-func (d *sknDatapoint) SetColorName(n string) {
+func (d *lineChartDatapoint) SetColorName(n string) {
 	(*d).colorName = n
 }
-func (d *sknDatapoint) SetTimestamp(t string) {
+func (d *lineChartDatapoint) SetTimestamp(t string) {
 	(*d).timestamp = t
 }

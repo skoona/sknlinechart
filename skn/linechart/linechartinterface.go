@@ -1,9 +1,9 @@
-package components
+package linechart
 
 import "fyne.io/fyne/v2"
 
-// SknLineChart feature list
-type SknLineChart interface {
+// LineChart feature list
+type LineChart interface {
 	IsDataPointMarkersEnabled() bool // mouse button 2 toggles
 	IsHorizGridLinesEnabled() bool
 	IsVertGridLinesEnabled() bool
@@ -36,6 +36,6 @@ type SknLineChart interface {
 	Refresh()
 	Resize(s fyne.Size)
 
-	ApplyDataSeries(seriesName string, newSeries []SknChartDatapoint) error
-	ApplyDataPoint(seriesName string, newDataPoint SknChartDatapoint)
+	ApplyDataSeries(seriesName string, newSeries []LineChartDatapoint) error
+	ApplyDataPoint(seriesName string, newDataPoint LineChartDatapoint)
 }

@@ -6,7 +6,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
-	"github.com/skoona/sknlinechart/pkg/components"
+	"github.com/skoona/sknlinechart/skn/linechart"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -17,7 +17,7 @@ import (
 func main() {
 	windowClosed := false
 
-	gui := app.NewWithID("net.skoona.mq2influx")
+	gui := app.NewWithID("net.skoona.sknLineChart")
 	w := gui.NewWindow("Custom Widget Development")
 
 	w.SetOnClosed(func() {
@@ -26,8 +26,8 @@ func main() {
 		time.Sleep(2 * time.Second)
 	})
 
-	dataPoints := map[string][]components.SknChartDatapoint{} // legend, points
-	var first, second, many []components.SknChartDatapoint
+	dataPoints := map[string][]linechart.LineChartDatapoint{} // legend, points
+	var first, second, many []linechart.LineChartDatapoint
 
 	rand.NewSource(50.0)
 	for x := 1; x < 125; x++ {
@@ -37,7 +37,7 @@ func main() {
 		} else if val < 5.0 {
 			val = 5.0
 		}
-		first = append(first, components.NewSknDatapoint(
+		first = append(first, linechart.NewLineChartDatapoint(
 			val,
 			theme.ColorOrange,
 			time.Now().Format(time.RFC3339)))
@@ -49,7 +49,7 @@ func main() {
 		} else if val < 35.0 {
 			val = 35.0
 		}
-		second = append(second, components.NewSknDatapoint(
+		second = append(second, linechart.NewLineChartDatapoint(
 			val,
 			theme.ColorRed,
 			time.Now().Format(time.RFC3339)))
@@ -61,7 +61,7 @@ func main() {
 		} else if val < 65.0 {
 			val = 65.0
 		}
-		many = append(many, components.NewSknDatapoint(
+		many = append(many, linechart.NewLineChartDatapoint(
 			val,
 			theme.ColorPurple,
 			time.Now().Format(time.RFC3339)))
@@ -70,12 +70,12 @@ func main() {
 	dataPoints["first"] = first
 	dataPoints["second"] = second
 
-	lineChart, err := components.NewSknLineChart("Skoona Line Chart", "Example Time Series", &dataPoints)
+	lineChart, err := linechart.NewLineChart("Skoona Line Chart", "Example Time Series", &dataPoints)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
-	go (func(chart components.SknLineChart) {
+	go (func(chart linechart.LineChart) {
 		time.Sleep(10 * time.Second)
 		err = lineChart.ApplyDataSeries("many", many)
 		if err != nil {
@@ -86,7 +86,7 @@ func main() {
 			if windowClosed {
 				break
 			}
-			chart.ApplyDataPoint("steady", components.NewSknDatapoint(
+			chart.ApplyDataPoint("steady", linechart.NewLineChartDatapoint(
 				rand.Float32()*110.0,
 				theme.ColorYellow,
 				time.Now().Format(time.RFC3339)))

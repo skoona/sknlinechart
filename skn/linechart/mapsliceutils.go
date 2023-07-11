@@ -1,4 +1,4 @@
-package components
+package linechart
 
 // RemoveIndexFromSlice remove the given index from any type of slice
 func RemoveIndexFromSlice[K comparable](index int, slice []K) []K {
