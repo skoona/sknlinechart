@@ -6,7 +6,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
-	"github.com/skoona/sknlinechart/skn/linechart"
+	"github.com/skoona/sknlinechart"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -26,8 +26,8 @@ func main() {
 		time.Sleep(2 * time.Second)
 	})
 
-	dataPoints := map[string][]linechart.LineChartDatapoint{} // legend, points
-	var first, second, many []linechart.LineChartDatapoint
+	dataPoints := map[string][]sknlinechart.LineChartDatapoint{} // legend, points
+	var first, second, many []sknlinechart.LineChartDatapoint
 
 	rand.NewSource(50.0)
 	for x := 1; x < 125; x++ {
@@ -37,7 +37,7 @@ func main() {
 		} else if val < 5.0 {
 			val = 5.0
 		}
-		first = append(first, linechart.NewLineChartDatapoint(
+		first = append(first, sknlinechart.NewLineChartDatapoint(
 			val,
 			theme.ColorOrange,
 			time.Now().Format(time.RFC3339)))
@@ -49,7 +49,7 @@ func main() {
 		} else if val < 35.0 {
 			val = 35.0
 		}
-		second = append(second, linechart.NewLineChartDatapoint(
+		second = append(second, sknlinechart.NewLineChartDatapoint(
 			val,
 			theme.ColorRed,
 			time.Now().Format(time.RFC3339)))
@@ -61,7 +61,7 @@ func main() {
 		} else if val < 65.0 {
 			val = 65.0
 		}
-		many = append(many, linechart.NewLineChartDatapoint(
+		many = append(many, sknlinechart.NewLineChartDatapoint(
 			val,
 			theme.ColorPurple,
 			time.Now().Format(time.RFC3339)))
@@ -70,12 +70,12 @@ func main() {
 	dataPoints["first"] = first
 	dataPoints["second"] = second
 
-	lineChart, err := linechart.NewLineChart("Skoona Line Chart", "Example Time Series", &dataPoints)
+	lineChart, err := sknlinechart.NewLineChart("Skoona Line Chart", "Example Time Series", &dataPoints)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
-	go (func(chart linechart.LineChart) {
+	go (func(chart sknlinechart.LineChart) {
 		time.Sleep(10 * time.Second)
 		err = lineChart.ApplyDataSeries("many", many)
 		if err != nil {
@@ -86,7 +86,7 @@ func main() {
 			if windowClosed {
 				break
 			}
-			chart.ApplyDataPoint("steady", linechart.NewLineChartDatapoint(
+			chart.ApplyDataPoint("steady", sknlinechart.NewLineChartDatapoint(
 				rand.Float32()*110.0,
 				theme.ColorYellow,
 				time.Now().Format(time.RFC3339)))

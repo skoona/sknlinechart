@@ -1,4 +1,4 @@
-package linechart
+package sknlinechart
 
 import "fyne.io/fyne/v2"
 
