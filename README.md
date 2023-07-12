@@ -169,6 +169,7 @@ func makeChart(title, footer string) (*sknlinechart.LineChartSkn, error) {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
+	sknlinechart.DebugLoggingEnabled = true
 
 	return lineChart, err
 }
