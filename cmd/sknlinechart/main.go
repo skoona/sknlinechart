@@ -98,7 +98,6 @@ func main() {
 	})(lineChart)
 
 	w.Resize(fyne.NewSize(982, 452))
-	//w.SetContent(lineChart)
 	w.SetContent(container.NewPadded(lineChart))
 
 	go func(w *fyne.Window) {

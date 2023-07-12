@@ -364,18 +364,30 @@ func (w *LineChartSkn) MouseMoved(me *desktop.MouseEvent) {
 	if !w.EnableMousePointDisplay {
 		return
 	}
+	w.propertyLock.RLock()
+	matched := false
+
+found:
 	for key, points := range *w.dataPoints {
 		for idx, point := range points {
 			top, bottom := point.MarkerPosition()
 			if !me.Position.IsZero() && !top.IsZero() {
-				if me.Position.X >= top.X && me.Position.X <= bottom.X &&
-					me.Position.Y >= top.Y && me.Position.Y <= bottom.Y {
+				if me.Position.X >= top.X-1 && me.Position.X <= bottom.X+1 &&
+					me.Position.Y >= top.Y-1 && me.Position.Y <= bottom.Y+1 {
+					fmt.Println("LineChartSkn::MouseMoved() Match Mouse: ", me.Position, ", Top: ", top, ", Bottom: ", bottom)
 					value := fmt.Sprint(" Series: ", key, ", Index: ", idx, ", Value: ", point.Value(), "     [ ", point.Timestamp(), " ]")
-					w.enableMouseContainer(value, point.ColorName(), &me.Position).Refresh()
+					w.enableMouseContainer(value, point.ColorName(), &me.Position)
+					matched = true
+					break found
 				}
 			}
 		}
 	}
+	w.propertyLock.RUnlock()
+	if matched {
+		w.Refresh()
+	}
+
 }
 
 // MouseOut disable display of mouse data point display
@@ -391,7 +403,7 @@ func (w *LineChartSkn) enableMouseContainer(value, frameColor string, mousePosit
 	w.mouseDisplayStr = value
 	w.mouseDisplayFrameColor = frameColor
 	ct := canvas.NewText(value, theme.PrimaryColorNamed(frameColor))
-	parts := strings.Split(value, "[")
+	parts := strings.Split(value, "    [")
 	ts := fyne.MeasureText(parts[0], ct.TextSize, ct.TextStyle)
 	mp := &fyne.Position{X: mousePosition.X - (ts.Width / 2), Y: mousePosition.Y - (3 * ts.Height) - theme.Padding()}
 	w.mouseDisplayPosition = mp
@@ -727,10 +739,10 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 	r.topRightDesc.Move(fyne.Position{X: (s.Width - ts.Width) - theme.Padding(), Y: ts.Height / 4})
 	r.topLeftDesc.Move(fyne.NewPos(theme.Padding(), ts.Height/4))
 
-	msg := strings.Split(r.mouseDisplayContainer.Objects[1].(*widget.Label).Text, "    [ ")
+	msg := strings.Split(r.mouseDisplayContainer.Objects[1].(*widget.Label).Text, "   [ ")
 	ts = fyne.MeasureText(msg[0], 14, r.mouseDisplayContainer.Objects[1].(*widget.Label).TextStyle)
 
-	r.mouseDisplayContainer.Objects[1].(*widget.Label).Resize(fyne.NewSize(ts.Width-theme.Padding(), (2*ts.Height)+theme.Padding())) // allow room for wrap
+	r.mouseDisplayContainer.Objects[1].(*widget.Label).Resize(fyne.NewSize(ts.Width-theme.Padding(), (2*ts.Height)+(theme.Padding()/2))) // allow room for wrap
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).Resize(fyne.NewSize(ts.Width+theme.Padding(), (2*ts.Height)+theme.Padding()))
 	// top edge
 	if r.widget.mouseDisplayPosition.Y < theme.Padding()/6 {
@@ -782,8 +794,8 @@ func (r *lineChartRenderer) MinSize() fyne.Size {
 // but only the objects that have been enabled or are not at default value; i.e. ""
 func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 	fmt.Println("lineChartRenderer::Objects() ENTER")
-	r.widget.propertyLock.Lock()
-	defer r.widget.propertyLock.Unlock()
+	r.widget.propertyLock.RLock()
+	defer r.widget.propertyLock.RUnlock()
 
 	objs := []fyne.CanvasObject{}
 	objs = append(objs, r.widget.objects...)
