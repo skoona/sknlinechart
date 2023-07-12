@@ -370,7 +370,7 @@ func (w *LineChartSkn) MouseMoved(me *desktop.MouseEvent) {
 			if !me.Position.IsZero() && !top.IsZero() {
 				if me.Position.X >= top.X && me.Position.X <= bottom.X &&
 					me.Position.Y >= top.Y && me.Position.Y <= bottom.Y {
-					value := fmt.Sprint(" Series: ", key, ", Index: ", idx, ", Value: ", point.Value(), " [ ", point.Timestamp(), " ]")
+					value := fmt.Sprint(" Series: ", key, ", Index: ", idx, ", Value: ", point.Value(), "     [ ", point.Timestamp(), " ]")
 					w.enableMouseContainer(value, point.ColorName(), &me.Position).Refresh()
 				}
 			}
@@ -727,7 +727,7 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 	r.topRightDesc.Move(fyne.Position{X: (s.Width - ts.Width) - theme.Padding(), Y: ts.Height / 4})
 	r.topLeftDesc.Move(fyne.NewPos(theme.Padding(), ts.Height/4))
 
-	msg := strings.Split(r.mouseDisplayContainer.Objects[1].(*widget.Label).Text, " [ ")
+	msg := strings.Split(r.mouseDisplayContainer.Objects[1].(*widget.Label).Text, "    [ ")
 	ts = fyne.MeasureText(msg[0], 14, r.mouseDisplayContainer.Objects[1].(*widget.Label).TextStyle)
 
 	r.mouseDisplayContainer.Objects[1].(*widget.Label).Resize(fyne.NewSize(ts.Width-theme.Padding(), (2*ts.Height)+theme.Padding())) // allow room for wrap
