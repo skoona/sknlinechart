@@ -4,7 +4,7 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-// LineChartDatapoint data container interface for LineChart
+// LineChartDatapoint data container interface for SknLineChart
 type LineChartDatapoint interface {
 	Value() float32
 	SetValue(y float32)

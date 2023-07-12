@@ -14,20 +14,9 @@ import (
 	"time"
 )
 
-func main() {
-	windowClosed := false
-
-	gui := app.NewWithID("net.skoona.sknLineChart")
-	w := gui.NewWindow("Custom Widget Development")
-
-	w.SetOnClosed(func() {
-		windowClosed = true
-		fmt.Println("::main() Window Closed")
-		time.Sleep(2 * time.Second)
-	})
-
+func makeChart(title, footer string) (*sknlinechart.LineChartSkn, error) {
 	dataPoints := map[string][]sknlinechart.LineChartDatapoint{} // legend, points
-	var first, second, many []sknlinechart.LineChartDatapoint
+	var first, second []sknlinechart.LineChartDatapoint
 
 	rand.NewSource(50.0)
 	for x := 1; x < 125; x++ {
@@ -54,18 +43,6 @@ func main() {
 			theme.ColorRed,
 			time.Now().Format(time.RFC3339)))
 	}
-	for x := 1; x < 120; x++ {
-		val := rand.Float32() * 75.0
-		if val > 90.0 {
-			val = 90.0
-		} else if val < 65.0 {
-			val = 65.0
-		}
-		many = append(many, sknlinechart.NewLineChartDatapoint(
-			val,
-			theme.ColorPurple,
-			time.Now().Format(time.RFC3339)))
-	}
 
 	dataPoints["first"] = first
 	dataPoints["second"] = second
@@ -75,7 +52,37 @@ func main() {
 		fmt.Println(err.Error())
 	}
 
-	go (func(chart sknlinechart.LineChart) {
+	return lineChart, err
+}
+
+func main() {
+	windowClosed := false
+
+	gui := app.NewWithID("net.skoona.sknLineChart")
+	w := gui.NewWindow("Custom Widget Development")
+
+	w.SetOnClosed(func() {
+		windowClosed = true
+		fmt.Println("::main() Window Closed")
+		time.Sleep(2 * time.Second)
+	})
+
+	lineChart, err := makeChart("Skoona Line Chart", "Example Time Series")
+
+	go (func(chart sknlinechart.SknLineChart) {
+		var many []sknlinechart.LineChartDatapoint
+		for x := 1; x < 120; x++ {
+			val := rand.Float32() * 75.0
+			if val > 90.0 {
+				val = 90.0
+			} else if val < 65.0 {
+				val = 65.0
+			}
+			many = append(many, sknlinechart.NewLineChartDatapoint(
+				val,
+				theme.ColorPurple,
+				time.Now().Format(time.RFC3339)))
+		}
 		time.Sleep(10 * time.Second)
 		err = lineChart.ApplyDataSeries("many", many)
 		if err != nil {
@@ -105,7 +112,7 @@ func main() {
 		signal.Notify(systemSignalChannel, syscall.SIGINT, syscall.SIGTERM)
 		sig := <-systemSignalChannel // wait on ctrl-c
 		windowClosed = true
-		fmt.Println(sig.String())
+		fmt.Println("Signal Received: ", sig.String())
 		(*w).Close()
 	}(&w)
 

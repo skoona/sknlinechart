@@ -64,23 +64,6 @@ ApplyDataSeries(seriesName string, newSeries []LineChartDatapoint) error
 // If series has more than 120 points, point 0 will be rolled out making room for this one
 ApplyDataPoint(seriesName string, newDataPoint LineChartDatapoint)
 
-// SetMinSize set minimum size of internal widget
-//  do not use
-//
-// Internal Use Only
-SetMinSize(s fyne.Size)
-
-// Refresh() expensive call to reload all on screen elements
-// prefer to use the containers Refresh() method
-//
-// Internal Use Only
-Refresh()
-
-// Resize Set a new size on the widget
-// use the Window Resize() method rather than this widgets
-//
-// Internal Use Only
-Resize(s fyne.Size)
 }
 
 ```
@@ -139,13 +122,54 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
-	"github.com/skoona/sknlinechart/skn/linechart"
+	"github.com/skoona/sknlinechart"
 	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 )
+
+func makeChart(title, footer string) (*sknlinechart.LineChartSkn, error) {
+	dataPoints := map[string][]sknlinechart.LineChartDatapoint{} // legend, points
+	var first, second []sknlinechart.LineChartDatapoint
+
+	rand.NewSource(50.0)
+	for x := 1; x < 125; x++ {
+		val := rand.Float32() * 100.0
+		if val > 30.0 {
+			val = 30.0
+		} else if val < 5.0 {
+			val = 5.0
+		}
+		first = append(first, sknlinechart.NewLineChartDatapoint(
+			val,
+			theme.ColorOrange,
+			time.Now().Format(time.RFC3339)))
+	}
+	for x := 1; x < 75; x++ {
+		val := rand.Float32() * 40.0
+		if val > 60.0 {
+			val = 60.0
+		} else if val < 35.0 {
+			val = 35.0
+		}
+		second = append(second, sknlinechart.NewLineChartDatapoint(
+			val,
+			theme.ColorRed,
+			time.Now().Format(time.RFC3339)))
+	}
+
+	dataPoints["first"] = first
+	dataPoints["second"] = second
+
+	lineChart, err := sknlinechart.NewLineChart("Skoona Line Chart", "Example Time Series", &dataPoints)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
+	return lineChart, err
+}
 
 func main() {
 	windowClosed := false
@@ -159,56 +183,22 @@ func main() {
 		time.Sleep(2 * time.Second)
 	})
 
-	dataPoints := map[string][]linechart.LineChartDatapoint{} // legend, points
-	var first, second, many []linechart.LineChartDatapoint
+	lineChart, err := makeChart("Skoona Line Chart", "Example Time Series")
 
-	rand.NewSource(50.0)
-	for x := 1; x < 125; x++ {
-		val := rand.Float32() * 100.0
-		if val > 30.0 {
-			val = 30.0
-		} else if val < 5.0 {
-			val = 5.0
+	go (func(chart sknlinechart.SknLineChart) {
+		var many []sknlinechart.LineChartDatapoint
+		for x := 1; x < 120; x++ {
+			val := rand.Float32() * 75.0
+			if val > 90.0 {
+				val = 90.0
+			} else if val < 65.0 {
+				val = 65.0
+			}
+			many = append(many, sknlinechart.NewLineChartDatapoint(
+				val,
+				theme.ColorPurple,
+				time.Now().Format(time.RFC3339)))
 		}
-		first = append(first, linechart.NewLineChartDatapoint(
-			val,
-			theme.ColorOrange,
-			time.Now().Format(time.RFC3339)))
-	}
-	for x := 1; x < 75; x++ {
-		val := rand.Float32() * 40.0
-		if val > 60.0 {
-			val = 60.0
-		} else if val < 35.0 {
-			val = 35.0
-		}
-		second = append(second, linechart.NewLineChartDatapoint(
-			val,
-			theme.ColorRed,
-			time.Now().Format(time.RFC3339)))
-	}
-	for x := 1; x < 120; x++ {
-		val := rand.Float32() * 75.0
-		if val > 90.0 {
-			val = 90.0
-		} else if val < 65.0 {
-			val = 65.0
-		}
-		many = append(many, linechart.NewLineChartDatapoint(
-			val,
-			theme.ColorPurple,
-			time.Now().Format(time.RFC3339)))
-	}
-
-	dataPoints["first"] = first
-	dataPoints["second"] = second
-
-	lineChart, err := linechart.NewLineChart("Skoona Line Chart", "Example Time Series", &dataPoints)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	go (func(chart linechart.LineChart) {
 		time.Sleep(10 * time.Second)
 		err = lineChart.ApplyDataSeries("many", many)
 		if err != nil {
@@ -219,7 +209,7 @@ func main() {
 			if windowClosed {
 				break
 			}
-			chart.ApplyDataPoint("steady", linechart.NewLineChartDatapoint(
+			chart.ApplyDataPoint("steady", sknlinechart.NewLineChartDatapoint(
 				rand.Float32()*110.0,
 				theme.ColorYellow,
 				time.Now().Format(time.RFC3339)))
@@ -230,8 +220,7 @@ func main() {
 		}
 	})(lineChart)
 
-	w.Resize(fyne.NewSize(1024, 756))
-	//w.SetContent(lineChart)
+	w.Resize(fyne.NewSize(982, 452))
 	w.SetContent(container.NewPadded(lineChart))
 
 	go func(w *fyne.Window) {
@@ -239,12 +228,12 @@ func main() {
 		signal.Notify(systemSignalChannel, syscall.SIGINT, syscall.SIGTERM)
 		sig := <-systemSignalChannel // wait on ctrl-c
 		windowClosed = true
-		fmt.Println(sig.String())
+		fmt.Println("Signal Received: ", sig.String())
 		(*w).Close()
 	}(&w)
 
 	w.ShowAndRun()
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 }
 
 ```
