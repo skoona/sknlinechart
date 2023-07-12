@@ -56,17 +56,6 @@ import (
 	"strings"
 )
 
-var (
-	DebugLoggingEnabled = false
-	logger              = log.New(os.Stdout, "[DEBUG]", log.Lmicroseconds|log.Lshortfile)
-)
-
-func debugLog(a ...any) {
-	if DebugLoggingEnabled {
-		logger.Println(a...)
-	}
-}
-
 // LineChartSkn widget to display multiple series of data points
 // which will roll off older point beyond the 120 point limit.
 type LineChartSkn struct {
@@ -94,8 +83,10 @@ type LineChartSkn struct {
 	dataPointScale          fyne.Size
 	minSize                 fyne.Size
 	// Private: Exposed for Testing; DO NOT USE
-	ObjectsCache []fyne.CanvasObject
-	propertyLock sync.RWMutex
+	ObjectsCache        []fyne.CanvasObject
+	propertyLock        sync.RWMutex
+	debugLoggingEnabled bool
+	logger              *log.Logger
 }
 
 var _ SknLineChart = (*LineChartSkn)(nil)
@@ -107,7 +98,6 @@ var _ fyne.Widget = (*LineChartSkn)(nil)
 // can return a valid chart object and an error object; errors really should be handled
 // and are caused by data points exceeding the container limit of 120; they will be truncated
 func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]LineChartDatapoint) (*LineChartSkn, error) {
-	debugLog("::NewLineChart()")
 	err := errors.New("")
 	dpl := 120
 	for key, points := range *dataPoints {
@@ -144,6 +134,7 @@ func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]LineCha
 		minSize:                 fyne.NewSize(420+theme.Padding()*4, 315+theme.Padding()*4),
 		ObjectsCache:            []fyne.CanvasObject{}, // everything except datapoints, markers, and mousebox
 		propertyLock:            sync.RWMutex{},
+		logger:                  log.New(os.Stdout, "[DEBUG] ", log.Lmicroseconds|log.Lshortfile),
 	}
 	w.ExtendBaseWidget(w) // Initialize the BaseWidget
 	return w, err
@@ -151,7 +142,7 @@ func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]LineCha
 
 // CreateRenderer Create the renderer. This is called by the fyne application
 func (w *LineChartSkn) CreateRenderer() fyne.WidgetRenderer {
-	debugLog("LineChartSkn::CreateRenderer()")
+	w.debugLog("LineChartSkn::CreateRenderer()")
 	return newLineChartRenderer(w)
 }
 
@@ -284,9 +275,9 @@ func (w *LineChartSkn) SetMousePointDisplay(enable bool) {
 // ApplyDataSeries adds a new series of data to existing chart set.
 // throws error if new series exceeds containers point limit
 func (w *LineChartSkn) ApplyDataSeries(seriesName string, newSeries []LineChartDatapoint) error {
-	debugLog("LineChartSkn::ApplyDataSeries() ENTER")
+	w.debugLog("LineChartSkn::ApplyDataSeries() ENTER")
 	if w == nil {
-		debugLog("LineChartSkn::ApplyDataSeries() ERROR EXIT")
+		w.debugLog("LineChartSkn::ApplyDataSeries() ERROR EXIT")
 		return fmt.Errorf("ApplyDataSeries() no active widget")
 	}
 
@@ -297,17 +288,17 @@ func (w *LineChartSkn) ApplyDataSeries(seriesName string, newSeries []LineChartD
 		w.propertyLock.Unlock()
 		w.Refresh()
 	} else {
-		debugLog("LineChartSkn::ApplyDataSeries() ERROR EXIT")
+		w.debugLog("LineChartSkn::ApplyDataSeries() ERROR EXIT")
 		return fmt.Errorf("[%s] data series datapoints limit exceeded. limit:%d, count:%d", seriesName, w.DataPointXLimit, len(newSeries))
 	}
-	debugLog("LineChartSkn::ApplyDataSeries() EXIT")
+	w.debugLog("LineChartSkn::ApplyDataSeries() EXIT")
 	return nil
 }
 
 // ApplyDataPoint adds a new datapoint to an existing series
 // will shift out the oldest point if containers limit is exceeded
 func (w *LineChartSkn) ApplyDataPoint(seriesName string, newDataPoint LineChartDatapoint) {
-	debugLog("LineChartSkn::ApplyDataPoint() ENTER")
+	w.debugLog("LineChartSkn::ApplyDataPoint() ENTER")
 	if w == nil {
 		return
 	}
@@ -322,12 +313,12 @@ func (w *LineChartSkn) ApplyDataPoint(seriesName string, newDataPoint LineChartD
 	w.datapointOrSeriesAdded = true
 	w.propertyLock.Unlock()
 	w.Refresh()
-	debugLog("LineChartSkn::ApplyDataPoint() EXIT")
+	w.debugLog("LineChartSkn::ApplyDataPoint() EXIT")
 }
 
 // MouseDown btn.2 toggles markers, btn.1 toggles mouse point display
 func (w *LineChartSkn) MouseDown(me *desktop.MouseEvent) {
-	debugLog("LineChartSkn::MouseDown() ENTER")
+	w.debugLog("LineChartSkn::MouseDown() ENTER")
 	if me.Button == desktop.MouseButtonSecondary {
 		w.EnableDataPointMarkers = !w.EnableDataPointMarkers
 		w.Refresh()
@@ -335,22 +326,22 @@ func (w *LineChartSkn) MouseDown(me *desktop.MouseEvent) {
 		w.EnableMousePointDisplay = !w.EnableMousePointDisplay
 		w.Refresh()
 	}
-	debugLog("LineChartSkn::MouseDown() EXIT")
+	w.debugLog("LineChartSkn::MouseDown() EXIT")
 }
 
 // MouseUp unused interface method
 func (w *LineChartSkn) MouseUp(*desktop.MouseEvent) {
-	debugLog("LineChartSkn::MouseUP()")
+	w.debugLog("LineChartSkn::MouseUP()")
 }
 
 // MouseIn unused interface method
 func (w *LineChartSkn) MouseIn(*desktop.MouseEvent) {
-	debugLog("LineChartSkn::MouseIn()")
+	w.debugLog("LineChartSkn::MouseIn()")
 }
 
 // MouseMoved interface method to discover which data point is under mouse
 func (w *LineChartSkn) MouseMoved(me *desktop.MouseEvent) {
-	debugLog("LineChartSkn::MouseMoved()")
+	w.debugLog("LineChartSkn::MouseMoved()")
 	if !w.EnableMousePointDisplay {
 		return
 	}
@@ -362,7 +353,7 @@ found:
 		for idx, point := range points {
 			top, bottom := point.MarkerPosition()
 			if !me.Position.IsZero() && !top.IsZero() {
-				//  Match Mouse:  {292 163} , Top:  &{289.40002 162.78574} , Bottom:  &{295.40002 168.78574}
+				w.debugLog("MouseIn() matched Mouse: ", me, ", Top: ", top, ", Bottom: ", bottom)
 				if me.Position.X > top.X && me.Position.X < bottom.X &&
 					me.Position.Y > top.Y-1 && me.Position.Y < bottom.Y {
 					value := fmt.Sprint(key, ", Index: ", idx, ", Value: ", point.Value(), "    \n[", point.Timestamp(), "]")
@@ -382,14 +373,14 @@ found:
 
 // MouseOut disable display of mouse data point display
 func (w *LineChartSkn) MouseOut() {
-	debugLog("LineChartSkn::MouseOut()")
+	w.debugLog("LineChartSkn::MouseOut()")
 	w.disableMouseContainer()
 }
 
 // enableMouseContainer private method to prepare values need by renderer to create pop display
 // composes display text, captures position and colorName for use by renderer
 func (w *LineChartSkn) enableMouseContainer(value, frameColor string, mousePosition *fyne.Position) *LineChartSkn {
-	debugLog("LineChartSkn::enableMouseContainer() ENTER")
+	w.debugLog("LineChartSkn::enableMouseContainer() ENTER")
 
 	w.mouseDisplayStr = value
 	w.mouseDisplayFrameColor = frameColor
@@ -399,16 +390,26 @@ func (w *LineChartSkn) enableMouseContainer(value, frameColor string, mousePosit
 	mp := &fyne.Position{X: mousePosition.X - (ts.Width / 2), Y: mousePosition.Y - (3 * ts.Height) - theme.Padding()}
 	w.mouseDisplayPosition = mp
 
-	debugLog("LineChartSkn::enableMouseContainer() EXIT")
+	w.debugLog("LineChartSkn::enableMouseContainer() EXIT")
 	return w
 }
 
 // disableMouseContainer private method to manage mouse leaving window
 // blank string will prevent display
 func (w *LineChartSkn) disableMouseContainer() {
-	debugLog("LineChartSkn::disableMouseContainer()")
+	w.debugLog("LineChartSkn::disableMouseContainer()")
 	w.mouseDisplayStr = ""
 	w.Refresh()
+}
+
+// EnableDebugLogging turns method entry/exit logging on or off
+func (w *LineChartSkn) EnableDebugLogging(enable bool) {
+	w.debugLoggingEnabled = enable
+}
+func (w *LineChartSkn) debugLog(a ...any) {
+	if w.debugLoggingEnabled {
+		w.logger.Println(a...)
+	}
 }
 
 // Widget Renderer code starts here
@@ -441,7 +442,7 @@ var _ fyne.WidgetRenderer = (*lineChartRenderer)(nil)
 //
 // Note: Do not size or move canvas objects here.
 func newLineChartRenderer(lineChart *LineChartSkn) *lineChartRenderer {
-	debugLog("::newLineChartRenderer() ENTER")
+	lineChart.debugLog("::newLineChartRenderer() ENTER")
 	lineChart.propertyLock.Lock()
 	defer lineChart.propertyLock.Unlock()
 
@@ -551,7 +552,7 @@ func newLineChartRenderer(lineChart *LineChartSkn) *lineChartRenderer {
 	// save all except data points, markers, and mouse box
 	lineChart.ObjectsCache = append(lineChart.ObjectsCache, objs...)
 
-	debugLog("::newLineChartRenderer() EXIT")
+	lineChart.debugLog("::newLineChartRenderer() EXIT")
 
 	return &lineChartRenderer{
 		widget:                lineChart,
@@ -577,7 +578,7 @@ func newLineChartRenderer(lineChart *LineChartSkn) *lineChartRenderer {
 // Refresh method is called if the state of the widget changes or the
 // theme is changed
 func (r *lineChartRenderer) Refresh() {
-	debugLog("lineChartRenderer::Refresh() ENTER")
+	r.widget.debugLog("lineChartRenderer::Refresh() ENTER")
 
 	if r.widget.datapointOrSeriesAdded {
 		r.verifyDataPoints()
@@ -636,13 +637,13 @@ func (r *lineChartRenderer) Refresh() {
 		r.widget.datapointOrSeriesAdded = false
 	}
 	r.mouseDisplayContainer.Refresh()
-	debugLog("lineChartRenderer::Refresh() EXIT")
+	r.widget.debugLog("lineChartRenderer::Refresh() EXIT")
 }
 
 // Layout Given the size required by the fyne application
 // move and re-size the all custom widget canvas objects here
 func (r *lineChartRenderer) Layout(s fyne.Size) {
-	debugLog("lineChartRenderer::Layout() ENTER: ", s)
+	r.widget.debugLog("lineChartRenderer::Layout() ENTER: ", s)
 
 	r.widget.propertyLock.Lock()
 	defer r.widget.propertyLock.Unlock()
@@ -771,23 +772,23 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 	r.bottomRightDesc.Move(fyne.NewPos((s.Width-ts.Width)-theme.Padding(), s.Height-ts.Height-theme.Padding()))
 	r.bottomLeftDesc.Move(fyne.NewPos(theme.Padding()+2.0, s.Height-ts.Height-theme.Padding()))
 
-	debugLog("lineChartRenderer::Layout() EXIT")
+	r.widget.debugLog("lineChartRenderer::Layout() EXIT")
 }
 
 // MinSize Create a minimum size for the widget.
 // The smallest size is can be overridden by user
 func (r *lineChartRenderer) MinSize() fyne.Size {
-	debugLog("lineChartRenderer::MinSize() ENTER")
+	r.widget.debugLog("lineChartRenderer::MinSize() ENTER")
 
 	val := fyne.NewSize(r.widget.minSize.Width, r.widget.minSize.Height)
-	debugLog("lineChartRenderer::MinSize() EXIT: ", val)
+	r.widget.debugLog("lineChartRenderer::MinSize() EXIT: ", val)
 	return val
 }
 
 // Objects Return a list of each canvas object.
 // but only the objects that have been enabled or are not at default value; i.e. ""
 func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
-	debugLog("lineChartRenderer::Objects() ENTER")
+	r.widget.debugLog("lineChartRenderer::Objects() ENTER")
 
 	r.widget.propertyLock.RLock()
 	defer r.widget.propertyLock.RUnlock()
@@ -898,19 +899,19 @@ func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 	} else {
 		r.mouseDisplayContainer.Hide()
 	}
-	debugLog("lineChartRenderer::Objects() EXIT")
+	r.widget.debugLog("lineChartRenderer::Objects() EXIT")
 	return objs
 }
 
 // Destroy Cleanup if resources have been allocated
 func (r *lineChartRenderer) Destroy() {
-	debugLog("lineChartRenderer::Destroy()")
+	r.widget.debugLog("lineChartRenderer::Destroy()")
 }
 
 // verifyDataPoints Renderer method to inject newly add data series or points
 // called by Refresh() to ensure new data is recognized
 func (r *lineChartRenderer) verifyDataPoints() {
-	debugLog("lineChartRenderer::VerifyDataPoints() ENTER")
+	r.widget.debugLog("lineChartRenderer::VerifyDataPoints() ENTER")
 	r.widget.propertyLock.Lock()
 	defer r.widget.propertyLock.Unlock()
 
@@ -930,5 +931,5 @@ func (r *lineChartRenderer) verifyDataPoints() {
 			}
 		}
 	}
-	debugLog("lineChartRenderer::VerifyDataPoints() EXIT")
+	r.widget.debugLog("lineChartRenderer::VerifyDataPoints() EXIT")
 }

@@ -1,5 +1,7 @@
 package sknlinechart
 
+import "fyne.io/fyne/v2"
+
 // SknLineChart feature list
 type SknLineChart interface {
 	// Chart Attributes
@@ -43,4 +45,10 @@ type SknLineChart interface {
 	// ApplyDataPoint primary method to add another data point to any series
 	// If series has more than 120 points, point 0 will be rolled out making room for this one
 	ApplyDataPoint(seriesName string, newDataPoint LineChartDatapoint)
+
+	// SetMinSize sets the minimun widget size respond when asked
+	SetMinSize(s fyne.Size)
+
+	// EnableDebugLogging turns method entry/exit logging on or off
+	EnableDebugLogging(enable bool)
 }

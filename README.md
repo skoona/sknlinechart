@@ -64,6 +64,12 @@ ApplyDataSeries(seriesName string, newSeries []LineChartDatapoint) error
 // If series has more than 120 points, point 0 will be rolled out making room for this one
 ApplyDataPoint(seriesName string, newDataPoint LineChartDatapoint)
 
+// SetMinSize sets the minimun widget size respond when asked
+SetMinSize(s fyne.Size)
+
+// EnableDebugLogging turns method entry/exit logging on or off
+EnableDebugLogging(enable bool)
+
 }
 
 ```
@@ -93,23 +99,22 @@ ApplyDataPoint(seriesName string, newDataPoint LineChartDatapoint)
  *       1. MouseIn(me MouseEvent)
  *       2. MouseMoved(me MouseEvent)  used to display data point under mouse
  *       3. MouseOut()
- *
  * 4. Define newRenderer() *notExportedStruct method
  *    1. Create canvas objects to be used in display
- *    2. Initialize there content if practical; not required
+ *    2. Initialize their content if practical; not required
  *    3. Implement the required WidgetRenderer methods
- * 	  4. Refresh()               call refresh on each object
- * 	  5. Layout(s fyne.Size)     resize & move objects
+ * 	  4. Refresh()               reload/update value if changed, call refresh on each object
+ * 	  5. Layout(s fyne.Size)     resize & move objects 
  * 	  6. MinSize()  fyne.Size    return the minimum size needed
  * 	  7. Object() []fyne.Canvas  return the objects to be displayed
  * 	  8. Destroy()               cleanup if needed to prevent leaks
- * 5. In general state methods are the public api with or without getters/setters
+ * 5. In general widget state methods are the public api with or without getters/setters
  *    and the renderer creates the displayable objects, applies state/value to them, and
  *    manages their display.
  *
  * Critical Notes:
- * - if using maps, map[string]interface{}, they will require a mutex to prevent concurrency error cause my concurrent read/writes.
- * - data binding creates new var from source var, and its the new var that should be shared as it is synchronized to changes in bond data var.
+ * - if using maps, map[string]interface{}, they will require a mutex to prevent concurrency errors caused my concurrent read/writes.
+ * - data binding creates a new var from source var and it is the new var that should be referenced, as it is synchronized to changes in bonded data var.
  */
 ```
 
@@ -169,7 +174,7 @@ func makeChart(title, footer string) (*sknlinechart.LineChartSkn, error) {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	sknlinechart.DebugLoggingEnabled = true
+	lineChart.EnableDebugLogging(true)
 
 	return lineChart, err
 }
