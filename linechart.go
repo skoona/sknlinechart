@@ -364,7 +364,7 @@ func (w *LineChartSkn) MouseMoved(me *desktop.MouseEvent) {
 	if !w.EnableMousePointDisplay {
 		return
 	}
-	w.propertyLock.RLock()
+	w.propertyLock.Lock()
 	matched := false
 
 found:
@@ -372,9 +372,9 @@ found:
 		for idx, point := range points {
 			top, bottom := point.MarkerPosition()
 			if !me.Position.IsZero() && !top.IsZero() {
-				if me.Position.X >= top.X-1 && me.Position.X <= bottom.X+1 &&
-					me.Position.Y >= top.Y-1 && me.Position.Y <= bottom.Y+1 {
-					fmt.Println("LineChartSkn::MouseMoved() Match Mouse: ", me.Position, ", Top: ", top, ", Bottom: ", bottom)
+				//  Match Mouse:  {292 163} , Top:  &{289.40002 162.78574} , Bottom:  &{295.40002 168.78574}
+				if me.Position.X > top.X && me.Position.X < bottom.X &&
+					me.Position.Y > top.Y-1 && me.Position.Y < bottom.Y {
 					value := fmt.Sprint(" Series: ", key, ", Index: ", idx, ", Value: ", point.Value(), "     [ ", point.Timestamp(), " ]")
 					w.enableMouseContainer(value, point.ColorName(), &me.Position)
 					matched = true
@@ -383,7 +383,7 @@ found:
 			}
 		}
 	}
-	w.propertyLock.RUnlock()
+	w.propertyLock.Unlock()
 	if matched {
 		w.Refresh()
 	}
@@ -400,6 +400,7 @@ func (w *LineChartSkn) MouseOut() {
 // composes display text, captures position and colorName for use by renderer
 func (w *LineChartSkn) enableMouseContainer(value, frameColor string, mousePosition *fyne.Position) *LineChartSkn {
 	fmt.Println("LineChartSkn::enableMouseContainer() ENTER")
+
 	w.mouseDisplayStr = value
 	w.mouseDisplayFrameColor = frameColor
 	ct := canvas.NewText(value, theme.PrimaryColorNamed(frameColor))
@@ -407,6 +408,7 @@ func (w *LineChartSkn) enableMouseContainer(value, frameColor string, mousePosit
 	ts := fyne.MeasureText(parts[0], ct.TextSize, ct.TextStyle)
 	mp := &fyne.Position{X: mousePosition.X - (ts.Width / 2), Y: mousePosition.Y - (3 * ts.Height) - theme.Padding()}
 	w.mouseDisplayPosition = mp
+
 	fmt.Println("LineChartSkn::enableMouseContainer() EXIT")
 	return w
 }
@@ -590,9 +592,10 @@ func (r *lineChartRenderer) Refresh() {
 	if r.widget.datapointOrSeriesAdded {
 		r.verifyDataPoints()
 	}
-
+	r.widget.propertyLock.Lock()
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
 	r.mouseDisplayContainer.Objects[1].(*widget.Label).SetText(r.widget.mouseDisplayStr)
+	r.widget.propertyLock.Unlock()
 
 	r.topLeftDesc.Text = r.widget.TopLeftLabel
 	r.topCenteredDesc.Text = r.widget.TopCenteredLabel
