@@ -47,10 +47,11 @@ func makeChart(title, footer string) (*sknlinechart.LineChartSkn, error) {
 	dataPoints["first"] = first
 	dataPoints["second"] = second
 
-	lineChart, err := sknlinechart.NewLineChart("Skoona Line Chart", "Example Time Series", &dataPoints)
+	lineChart, err := sknlinechart.NewLineChart(title, footer, &dataPoints)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
+	lineChart.EnableDebugLogging(true)
 
 	return lineChart, err
 }
