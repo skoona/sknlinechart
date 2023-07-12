@@ -78,11 +78,13 @@ ApplyDataPoint(seriesName string, newDataPoint LineChartDatapoint)
  *    1. export fields when possible
  * 2. Define Widget Renderer Named/unExported Struct
  *    1. un-exportable fields when possible
- * 3. Define NewWidget() *ExportedStruct method
+ * 3. Define NewWidget() *ExportedStruct method, related interface should have different name.
  *    1. Define state variables for this widget
  *    2. Extend the BaseWidget
+ *       1. If coding SetMinSize(fyne.Size), call resize on BaseWidget 
  *    3. Define Widget required methods
  *       1. CreateRenderer() fyne.WidgetRenderer, call newRenderer() below
+ *       2. Renderer has the other required methods, like Refresh(), etc.
  *    4. Define any methods required by additional interfaces, like
  *       desktop.Mouseable for mouse button support
  *       1. MouseDown(me MouseEvent)
