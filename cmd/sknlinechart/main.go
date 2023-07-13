@@ -44,6 +44,14 @@ func makeChart(title, footer string) (sknlinechart.SknLineChart, error) {
 		fmt.Println(err.Error())
 	}
 	lineChart.EnableDebugLogging(true)
+	lineChart.SetTopLeftLabel("top left")
+	//lineChart.SetTopRightLabel("top right")
+
+	lineChart.SetMiddleLeftLabel("Temperature")
+	lineChart.SetMiddleRightLabel("Humidity")
+
+	lineChart.SetBottomLeftLabel("bottom left")
+	lineChart.SetBottomRightLabel("bottom right")
 
 	return lineChart, err
 }

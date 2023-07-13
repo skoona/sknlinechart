@@ -34,15 +34,15 @@ func (d *lineChartDatapoint) Timestamp() string {
 	return d.timestamp
 }
 func (d *lineChartDatapoint) SetValue(v float32) {
-	(*d).value = v
+	d.value = v
 }
 func (d *lineChartDatapoint) SetMarkerPosition(top *fyne.Position, bottom *fyne.Position) {
-	(*d).markerTopPosition = top
-	(*d).markerBottomPosition = bottom
+	d.markerTopPosition = top
+	d.markerBottomPosition = bottom
 }
 func (d *lineChartDatapoint) SetColorName(n string) {
-	(*d).colorName = n
+	d.colorName = n
 }
 func (d *lineChartDatapoint) SetTimestamp(t string) {
-	(*d).timestamp = t
+	d.timestamp = t
 }

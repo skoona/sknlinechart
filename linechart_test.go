@@ -40,8 +40,6 @@ var _ = Describe("verify line chart initial state", func() {
 	It("should support a usable minimum size", func() {
 		lc, _ := makeUI("Testing", "Through Widget", 2)
 		lc.SetMinSize(fyne.NewSize(420+theme.Padding()*4, 315+theme.Padding()*4))
-		//lc.Refresh()
-
 		actual := lc.Size()
 		Expect(actual.Width).To(Equal(float32(436.0)))
 	})
@@ -108,7 +106,7 @@ func makeUI(title, footer string, points int) (sknlinechart.SknLineChart, error)
 		}
 	}
 	lineChart, err := sknlinechart.NewLineChart(title, footer, &dataPoints)
-	lineChart.EnableDebugLogging(true)
+	lineChart.EnableDebugLogging(false)
 
 	return lineChart, err
 }
