@@ -84,7 +84,7 @@ type LineChartSkn struct {
 	minSize                 fyne.Size
 	// Private: Exposed for Testing; DO NOT USE
 	ObjectsCache        []fyne.CanvasObject
-	propertyLock        sync.RWMutex
+	propertiesLock      sync.RWMutex
 	debugLoggingEnabled bool
 	logger              *log.Logger
 }
@@ -133,7 +133,7 @@ func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]LineCha
 		BottomRightLabel:        "bottom right desc",
 		minSize:                 fyne.NewSize(420+theme.Padding()*4, 315+theme.Padding()*4),
 		ObjectsCache:            []fyne.CanvasObject{}, // everything except datapoints, markers, and mousebox
-		propertyLock:            sync.RWMutex{},
+		propertiesLock:          sync.RWMutex{},
 		logger:                  log.New(os.Stdout, "[DEBUG] ", log.Lmicroseconds|log.Lshortfile),
 	}
 	w.ExtendBaseWidget(w) // Initialize the BaseWidget
@@ -146,12 +146,13 @@ func (w *LineChartSkn) CreateRenderer() fyne.WidgetRenderer {
 	return newLineChartRenderer(w)
 }
 
+/*
 // SetMinSize override the default min size of chart
 func (w *LineChartSkn) SetMinSize(s fyne.Size) {
 	w.minSize = s
 	w.BaseWidget.Resize(s)
 }
-
+*/
 // GetTopLeftLabel return text from top left label
 func (w *LineChartSkn) GetTopLeftLabel() string {
 	return w.TopLeftLabel
@@ -282,10 +283,10 @@ func (w *LineChartSkn) ApplyDataSeries(seriesName string, newSeries []LineChartD
 	}
 
 	if len(newSeries) < w.DataPointXLimit {
-		w.propertyLock.Lock()
+		w.propertiesLock.Lock()
 		(*w.dataPoints)[seriesName] = newSeries
 		w.datapointOrSeriesAdded = true
-		w.propertyLock.Unlock()
+		w.propertiesLock.Unlock()
 		w.Refresh()
 	} else {
 		w.debugLog("LineChartSkn::ApplyDataSeries() ERROR EXIT")
@@ -303,7 +304,7 @@ func (w *LineChartSkn) ApplyDataPoint(seriesName string, newDataPoint LineChartD
 		return
 	}
 
-	w.propertyLock.Lock()
+	w.propertiesLock.Lock()
 
 	if len((*w.dataPoints)[seriesName]) < w.DataPointXLimit {
 		(*w.dataPoints)[seriesName] = append((*w.dataPoints)[seriesName], newDataPoint)
@@ -311,7 +312,7 @@ func (w *LineChartSkn) ApplyDataPoint(seriesName string, newDataPoint LineChartD
 		(*w.dataPoints)[seriesName] = ShiftSlice(newDataPoint, (*w.dataPoints)[seriesName])
 	}
 	w.datapointOrSeriesAdded = true
-	w.propertyLock.Unlock()
+	w.propertiesLock.Unlock()
 	w.Refresh()
 	w.debugLog("LineChartSkn::ApplyDataPoint() EXIT")
 }
@@ -341,11 +342,12 @@ func (w *LineChartSkn) MouseIn(*desktop.MouseEvent) {
 
 // MouseMoved interface method to discover which data point is under mouse
 func (w *LineChartSkn) MouseMoved(me *desktop.MouseEvent) {
-	w.debugLog("LineChartSkn::MouseMoved()")
+	w.debugLog("LineChartSkn::MouseMoved() ENTER")
 	if !w.EnableMousePointDisplay {
+		w.debugLog("LineChartSkn::MouseMoved(disabled) EXIT")
 		return
 	}
-	w.propertyLock.Lock()
+	w.propertiesLock.Lock()
 	matched := false
 
 found:
@@ -353,9 +355,9 @@ found:
 		for idx, point := range points {
 			top, bottom := point.MarkerPosition()
 			if !me.Position.IsZero() && !top.IsZero() {
-				w.debugLog("MouseIn() matched Mouse: ", me, ", Top: ", top, ", Bottom: ", bottom)
 				if me.Position.X > top.X && me.Position.X < bottom.X &&
 					me.Position.Y > top.Y-1 && me.Position.Y < bottom.Y {
+					w.debugLog("MouseMoved() matched Mouse: ", me.Position, ", Top: ", top, ", Bottom: ", bottom)
 					value := fmt.Sprint(key, ", Index: ", idx, ", Value: ", point.Value(), "    \n[", point.Timestamp(), "]")
 					w.enableMouseContainer(value, point.ColorName(), &me.Position)
 					matched = true
@@ -364,11 +366,11 @@ found:
 			}
 		}
 	}
-	w.propertyLock.Unlock()
+	w.propertiesLock.Unlock()
 	if matched {
 		w.Refresh()
 	}
-
+	w.debugLog("LineChartSkn::MouseMoved() EXIT")
 }
 
 // MouseOut disable display of mouse data point display
@@ -443,8 +445,8 @@ var _ fyne.WidgetRenderer = (*lineChartRenderer)(nil)
 // Note: Do not size or move canvas objects here.
 func newLineChartRenderer(lineChart *LineChartSkn) *lineChartRenderer {
 	lineChart.debugLog("::newLineChartRenderer() ENTER")
-	lineChart.propertyLock.Lock()
-	defer lineChart.propertyLock.Unlock()
+	lineChart.propertiesLock.Lock()
+	defer lineChart.propertiesLock.Unlock()
 
 	objs := []fyne.CanvasObject{}
 
@@ -583,10 +585,10 @@ func (r *lineChartRenderer) Refresh() {
 	if r.widget.datapointOrSeriesAdded {
 		r.verifyDataPoints()
 	}
-	r.widget.propertyLock.Lock()
+	r.widget.propertiesLock.Lock()
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
 	r.mouseDisplayContainer.Objects[1].(*widget.Label).SetText(r.widget.mouseDisplayStr)
-	r.widget.propertyLock.Unlock()
+	r.widget.propertiesLock.Unlock()
 
 	r.topLeftDesc.Text = r.widget.TopLeftLabel
 	r.topCenteredDesc.Text = r.widget.TopCenteredLabel
@@ -616,8 +618,8 @@ func (r *lineChartRenderer) Refresh() {
 		r.Layout(r.widget.Size())
 	}
 
-	r.widget.propertyLock.RLock()
-	defer r.widget.propertyLock.RUnlock()
+	r.widget.propertiesLock.RLock()
+	defer r.widget.propertiesLock.RUnlock()
 
 	for _, v := range r.widget.ObjectsCache {
 		v.Refresh()
@@ -645,8 +647,8 @@ func (r *lineChartRenderer) Refresh() {
 func (r *lineChartRenderer) Layout(s fyne.Size) {
 	r.widget.debugLog("lineChartRenderer::Layout() ENTER: ", s)
 
-	r.widget.propertyLock.Lock()
-	defer r.widget.propertyLock.Unlock()
+	r.widget.propertiesLock.Lock()
+	defer r.widget.propertiesLock.Unlock()
 
 	r.xInc = (s.Width - theme.Padding()) / 14.0
 	r.yInc = (s.Height - theme.Padding()) / 14.0
@@ -779,10 +781,9 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 // The smallest size is can be overridden by user
 func (r *lineChartRenderer) MinSize() fyne.Size {
 	r.widget.debugLog("lineChartRenderer::MinSize() ENTER")
-
-	val := fyne.NewSize(r.widget.minSize.Width, r.widget.minSize.Height)
-	r.widget.debugLog("lineChartRenderer::MinSize() EXIT: ", val)
-	return val
+	rVal := fyne.NewSize(r.widget.minSize.Width, r.widget.minSize.Height)
+	r.widget.debugLog("lineChartRenderer::MinSize() EXIT: renderer: ", rVal)
+	return rVal
 }
 
 // Objects Return a list of each canvas object.
@@ -790,8 +791,8 @@ func (r *lineChartRenderer) MinSize() fyne.Size {
 func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 	r.widget.debugLog("lineChartRenderer::Objects() ENTER")
 
-	r.widget.propertyLock.RLock()
-	defer r.widget.propertyLock.RUnlock()
+	r.widget.propertiesLock.RLock()
+	defer r.widget.propertiesLock.RUnlock()
 
 	objs := []fyne.CanvasObject{}
 	objs = append(objs, r.widget.ObjectsCache...)
@@ -912,8 +913,8 @@ func (r *lineChartRenderer) Destroy() {
 // called by Refresh() to ensure new data is recognized
 func (r *lineChartRenderer) verifyDataPoints() {
 	r.widget.debugLog("lineChartRenderer::VerifyDataPoints() ENTER")
-	r.widget.propertyLock.Lock()
-	defer r.widget.propertyLock.Unlock()
+	r.widget.propertiesLock.Lock()
+	defer r.widget.propertiesLock.Unlock()
 
 	for key, points := range *r.widget.dataPoints {
 		if nil == r.dataPoints[key] {
