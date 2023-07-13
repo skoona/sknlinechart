@@ -112,7 +112,9 @@ func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]*LineCh
 			err = fmt.Errorf("%s\n::NewLineChart() dataPoint contents exceeds the point count limit[Action: truncated leading]. Series: %s, points: %d, Limit: %d", err.Error(), key, cnt, dpl)
 		}
 	}
-
+	if len(err.Error()) < 10 {
+		err = nil
+	}
 	w := &LineChartSkn{ // Create this widget with an initial text value
 		dataPoints:              *dataPoints,
 		datapointOrSeriesAdded:  true,
