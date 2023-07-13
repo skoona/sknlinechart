@@ -137,40 +137,32 @@ import (
 	"time"
 )
 
-func makeChart(title, footer string) (*sknlinechart.LineChartSkn, error) {
-	dataPoints := map[string][]sknlinechart.LineChartDatapoint{} // legend, points
-	var first, second []sknlinechart.LineChartDatapoint
+func makeChart(title, footer string) (sknlinechart.SknLineChart, error) {
+	dataPoints := map[string][]*sknlinechart.LineChartDatapoint{} // legend, points
 
-	rand.NewSource(50.0)
-	for x := 1; x < 125; x++ {
-		val := rand.Float32() * 100.0
-		if val > 30.0 {
+	rand.NewSource(1000.0)
+	for x := 1; x < 130; x++ {
+		val := rand.Float32() * 75.0
+		if val > 75.0 {
+			val = 75.0
+		} else if val < 30.0 {
 			val = 30.0
-		} else if val < 5.0 {
-			val = 5.0
 		}
-		first = append(first, sknlinechart.NewLineChartDatapoint(
-			val,
-			theme.ColorOrange,
-			time.Now().Format(time.RFC3339)))
+		point := sknlinechart.NewLineChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC3339))
+		dataPoints["Humidity"] = append(dataPoints["Humidity"], &point)
 	}
-	for x := 1; x < 75; x++ {
-		val := rand.Float32() * 40.0
-		if val > 60.0 {
-			val = 60.0
-		} else if val < 35.0 {
-			val = 35.0
+	for x := 1; x < 130; x++ {
+		val := rand.Float32() * 75.0
+		if val > 95.0 {
+			val = 95.0
+		} else if val < 55.0 {
+			val = 55.0
 		}
-		second = append(second, sknlinechart.NewLineChartDatapoint(
-			val,
-			theme.ColorRed,
-			time.Now().Format(time.RFC3339)))
+		point := sknlinechart.NewLineChartDatapoint(val, theme.ColorRed, time.Now().Format(time.RFC3339))
+		dataPoints["Temperature"] = append(dataPoints["Temperature"], &point)
 	}
 
-	dataPoints["first"] = first
-	dataPoints["second"] = second
-
-	lineChart, err := sknlinechart.NewLineChart("Skoona Line Chart", "Example Time Series", &dataPoints)
+	lineChart, err := sknlinechart.NewLineChart(title, footer, &dataPoints)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -194,21 +186,19 @@ func main() {
 	lineChart, err := makeChart("Skoona Line Chart", "Example Time Series")
 
 	go (func(chart sknlinechart.SknLineChart) {
-		var many []sknlinechart.LineChartDatapoint
-		for x := 1; x < 120; x++ {
-			val := rand.Float32() * 75.0
-			if val > 90.0 {
-				val = 90.0
-			} else if val < 65.0 {
-				val = 65.0
+		var many []*sknlinechart.LineChartDatapoint
+		for x := 1; x < 121; x++ {
+			val := rand.Float32() * 25.0
+			if val > 50.0 {
+				val = 50.0
+			} else if val < 5.0 {
+				val = 5.0
 			}
-			many = append(many, sknlinechart.NewLineChartDatapoint(
-				val,
-				theme.ColorPurple,
-				time.Now().Format(time.RFC3339)))
+			point := sknlinechart.NewLineChartDatapoint(val, theme.ColorPurple, time.Now().Format(time.RFC3339))
+			many = append(many, &point)
 		}
 		time.Sleep(10 * time.Second)
-		err = lineChart.ApplyDataSeries("many", many)
+		err = lineChart.ApplyDataSeries("AllAtOnce", many)
 		if err != nil {
 			fmt.Println("ApplyDataSeries", err.Error())
 		}
@@ -217,10 +207,8 @@ func main() {
 			if windowClosed {
 				break
 			}
-			chart.ApplyDataPoint("steady", sknlinechart.NewLineChartDatapoint(
-				rand.Float32()*110.0,
-				theme.ColorYellow,
-				time.Now().Format(time.RFC3339)))
+			point := sknlinechart.NewLineChartDatapoint(rand.Float32()*110.0, theme.ColorYellow, time.Now().Format(time.RFC3339))
+			chart.ApplyDataPoint("SteadyStream", &point)
 			if windowClosed {
 				break
 			}
@@ -252,15 +240,14 @@ func main() {
 ├── README.md
 ├── cmd
 │   └── sknlinechart
-│       └── main.go
+│       ├── main.go
+│       └── main_test.go
 ├── go.mod
 ├── go.sum
-└── skn
-    └── linechart
-        ├── datapoint.go
-        ├── interfaces.go
-        ├── linechart.go
-        └── mapsliceutils.go
+├── datapoint.go
+├── linechartinterfaces.go
+├── linechart.go
+└── mapsliceutils.go
 
 ```
 

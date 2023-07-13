@@ -4,23 +4,6 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-// LineChartDatapoint data container interface for SknLineChart
-type LineChartDatapoint interface {
-	Value() float32
-	SetValue(y float32)
-
-	ColorName() string
-	SetColorName(n string)
-
-	Timestamp() string
-	SetTimestamp(t string)
-
-	// MarkerPosition internal use only: current data point marker location
-	MarkerPosition() (*fyne.Position, *fyne.Position)
-	// SetMarkerPosition internal use only: sace location of where data point marker is located
-	SetMarkerPosition(top *fyne.Position, bottom *fyne.Position)
-}
-
 type lineChartDatapoint struct {
 	value                float32
 	markerTopPosition    *fyne.Position
