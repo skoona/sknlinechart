@@ -1,6 +1,8 @@
 package sknlinechart_test
 
 import (
+	"fyne.io/fyne/v2"
+	_ "fyne.io/fyne/v2/test"
 	"fyne.io/fyne/v2/theme"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -29,17 +31,19 @@ var _ = Describe("verify line chart initial state", func() {
 		Expect(err).To(HaveOccurred())
 		Expect(reflect.TypeOf(lc).String()).To(Equal("*sknlinechart.LineChartSkn"))
 	})
-	XIt("should cache chart elements that don't change value or position", func() {
+	It("should cache chart elements that don't change value or position", func() {
 		lc, _ := makeUI("Testing", "Through Widget", 2)
-		lc.Size()
+		lc.Refresh()
 		actual := lc.ObjectCount()
 		Expect(actual).To(Equal(56))
 	})
-	XIt("should support a usable minimum size", func() {
+	It("should support a usable minimum size", func() {
 		lc, _ := makeUI("Testing", "Through Widget", 2)
+		lc.SetMinSize(fyne.NewSize(420+theme.Padding()*4, 315+theme.Padding()*4))
 		//lc.Refresh()
-		actual := lc.Size().Width
-		Expect(actual).To(Equal(436))
+
+		actual := lc.Size()
+		Expect(actual.Width).To(Equal(float32(436.0)))
 	})
 
 	It("chart border labels can be changed", func() {
@@ -104,7 +108,7 @@ func makeUI(title, footer string, points int) (sknlinechart.SknLineChart, error)
 		}
 	}
 	lineChart, err := sknlinechart.NewLineChart(title, footer, &dataPoints)
-	lineChart.EnableDebugLogging(false)
+	lineChart.EnableDebugLogging(true)
 
 	return lineChart, err
 }
