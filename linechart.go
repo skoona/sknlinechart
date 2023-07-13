@@ -918,6 +918,11 @@ func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 func (r *lineChartRenderer) Destroy() {
 	r.widget.debugLog("lineChartRenderer::Destroy() ENTER cnt: ", len(r.widget.objectsCache))
 	r.widget.objectsCache = r.widget.objectsCache[:0]
+	for key, slice := range r.widget.dataPoints {
+		slice = slice[:0]
+		r.dataPoints[key] = r.dataPoints[key][:0]
+		r.dataPointMarkers[key] = r.dataPointMarkers[key][:0]
+	}
 	r.widget.debugLog("lineChartRenderer::Destroy() EXIT cnt: ", len(r.widget.objectsCache))
 }
 
