@@ -2,3 +2,4 @@
 *.log
 ./sknlinechart
 ./lc
+bin/*
