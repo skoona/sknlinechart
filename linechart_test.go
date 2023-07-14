@@ -1,7 +1,6 @@
 package sknlinechart_test
 
 import (
-	"fyne.io/fyne/v2"
 	_ "fyne.io/fyne/v2/test"
 	"fyne.io/fyne/v2/theme"
 	. "github.com/onsi/ginkgo/v2"
@@ -39,9 +38,8 @@ var _ = Describe("verify line chart initial state", func() {
 	})
 	It("should support a usable minimum size", func() {
 		lc, _ := makeUI("Testing", "Through Widget", 2)
-		lc.SetMinSize(fyne.NewSize(420+theme.Padding()*4, 315+theme.Padding()*4))
-		actual := lc.Size()
-		Expect(actual.Width).To(Equal(float32(436.0)))
+		actual := lc.MinSize()
+		Expect(actual.Width).To(BeNumerically("==", float32(436.0)))
 	})
 
 	It("chart border labels can be changed", func() {

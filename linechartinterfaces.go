@@ -68,9 +68,6 @@ type SknLineChart interface {
 	// If series has more than 120 points, point 0 will be rolled out making room for this one
 	ApplyDataPoint(seriesName string, newDataPoint *LineChartDatapoint)
 
-	// SetMinSize sets the minimum widget size respond when asked
-	SetMinSize(s fyne.Size)
-
 	// EnableDebugLogging turns method entry/exit logging on or off
 	EnableDebugLogging(enable bool)
 
@@ -79,7 +76,6 @@ type SknLineChart interface {
 
 	// fyne.CanvasObject compliance
 	// implemented by BaseWidget
-
 	Hide()
 	MinSize() fyne.Size
 	Move(position fyne.Position)

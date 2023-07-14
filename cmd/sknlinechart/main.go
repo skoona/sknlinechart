@@ -57,6 +57,8 @@ func makeChart(title, footer string) (sknlinechart.SknLineChart, error) {
 }
 
 func main() {
+	systemSignalChannel := make(chan os.Signal, 1)
+
 	windowClosed := false
 
 	gui := app.NewWithID("net.skoona.sknLineChart")
@@ -64,8 +66,8 @@ func main() {
 
 	w.SetOnClosed(func() {
 		windowClosed = true
+		systemSignalChannel <- syscall.SIGTERM
 		fmt.Println("::main() Window Closed")
-		time.Sleep(2 * time.Second)
 	})
 
 	lineChart, err := makeChart("Skoona Line Chart", "Example Time Series")
@@ -104,15 +106,14 @@ func main() {
 	w.Resize(fyne.NewSize(982, 452))
 	w.SetContent(container.NewPadded(lineChart))
 
-	go func(w *fyne.Window) {
-		systemSignalChannel := make(chan os.Signal, 1)
-		signal.Notify(systemSignalChannel, syscall.SIGINT, syscall.SIGTERM)
-		sig := <-systemSignalChannel // wait on ctrl-c
+	go func(w *fyne.Window, ch chan os.Signal) {
+		signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+		sig := <-ch // wait on ctrl-c
 		windowClosed = true
 		fmt.Println("Signal Received: ", sig.String())
 		(*w).Close()
-	}(&w)
+	}(&w, systemSignalChannel)
 
 	w.ShowAndRun()
-	time.Sleep(1 * time.Second)
+
 }

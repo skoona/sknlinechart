@@ -56,4 +56,22 @@ var _ = Describe("Maps and slices utilities", func() {
 		})
 	})
 
+	Describe("Remove datapoints when given too many on addition to series", func() {
+		var orignalCount int
+
+		It("should remove one point from source", func() {
+			orignalCount = len(dataPoints)
+			dataPoints = sknlinechart.RemoveIndexFromSlice(0, dataPoints)
+			Expect(len(dataPoints)).To(Equal(orignalCount - 1))
+		})
+		It("should detect empty slice and return it empty", func() {
+			var a []*sknlinechart.LineChartDatapoint
+			var b []*sknlinechart.LineChartDatapoint
+			b = sknlinechart.RemoveIndexFromSlice(0, a)
+			Expect(len(a)).To(Equal(len(b)))
+			Expect(a).To(Equal(b))
+		})
+
+	})
+
 })
