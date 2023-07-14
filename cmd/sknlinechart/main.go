@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	lc "github.com/skoona/sknlinechart"
+	"log"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -96,6 +97,10 @@ func main() {
 			time.Sleep(time.Second)
 		}
 	})(lineChart)
+
+	lineChart.SetPointUnderMouseCallback(func(p lc.ChartDatapoint) {
+		log.Printf("Chart Datapoint Selected Callback: %v\n", p)
+	})
 
 	w.Resize(fyne.NewSize(982, 452))
 	w.SetContent(container.NewPadded(lineChart))

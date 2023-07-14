@@ -89,7 +89,8 @@ type LineChartSkn struct {
 	debugLoggingEnabled     bool
 	logger                  *log.Logger
 	// Private: Exposed for Testing; DO NOT USE
-	objectsCache []fyne.CanvasObject
+	objectsCache          []fyne.CanvasObject
+	pointSelectedCallback func(ChartDatapoint)
 }
 
 var _ LineChart = (*LineChartSkn)(nil)
@@ -150,6 +151,10 @@ func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]*ChartD
 func (w *LineChartSkn) CreateRenderer() fyne.WidgetRenderer {
 	w.debugLog("LineChartSkn::CreateRenderer()")
 	return newLineChartRenderer(w)
+}
+
+func (w *LineChartSkn) SetPointUnderMouseCallback(f func(datapoint ChartDatapoint)) {
+	w.pointSelectedCallback = f
 }
 
 // SetMinSize set the minimum size limit for the linechart
@@ -371,6 +376,9 @@ found:
 					w.debugLog("MouseMoved() matched Mouse: ", me.Position, ", Top: ", top, ", Bottom: ", bottom)
 					value := fmt.Sprint(key, ", Index: ", idx, ", Value: ", (*point).Value(), "    \n[", (*point).Timestamp(), "]")
 					w.enableMouseContainer(value, (*point).ColorName(), &me.Position)
+					if w.pointSelectedCallback != nil {
+						w.pointSelectedCallback((*point).Copy())
+					}
 					matched = true
 					break found
 				}
