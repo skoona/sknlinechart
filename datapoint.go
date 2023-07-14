@@ -2,6 +2,7 @@ package sknlinechart
 
 import (
 	"fyne.io/fyne/v2"
+	"github.com/google/uuid"
 	"strings"
 )
 
@@ -9,6 +10,7 @@ type chartDatapoint struct {
 	value                float32
 	colorName            string
 	timestamp            string
+	externalID           string
 	markerTopPosition    *fyne.Position
 	markerBottomPosition *fyne.Position
 }
@@ -20,10 +22,16 @@ func NewChartDatapoint(value float32, colorName, timestamp string) ChartDatapoin
 		timestamp:            timestamp,
 		markerTopPosition:    &fyne.Position{0, 0},
 		markerBottomPosition: &fyne.Position{0, 0},
+		externalID:           uuid.New().String(),
 	}
 }
 func (d *chartDatapoint) Copy() ChartDatapoint {
-	return NewChartDatapoint(d.value, strings.Clone(d.colorName), strings.Clone(d.timestamp))
+	return &chartDatapoint{
+		value:      d.value,
+		colorName:  strings.Clone(d.colorName),
+		timestamp:  strings.Clone(d.timestamp),
+		externalID: strings.Clone(d.externalID),
+	}
 }
 func (d *chartDatapoint) Value() float32 {
 	return d.value
@@ -36,6 +44,9 @@ func (d *chartDatapoint) ColorName() string {
 }
 func (d *chartDatapoint) Timestamp() string {
 	return d.timestamp
+}
+func (d *chartDatapoint) ExternalID() string {
+	return d.externalID
 }
 func (d *chartDatapoint) SetValue(v float32) {
 	d.value = v

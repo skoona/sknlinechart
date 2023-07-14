@@ -13,6 +13,12 @@ type ChartDatapoint interface {
 	Timestamp() string
 	SetTimestamp(t string)
 
+	// ExternalID string uuid assigned when created
+	ExternalID() string
+
+	// Copy returns a cloned copy of current item
+	Copy() ChartDatapoint
+
 	// MarkerPosition internal use only: current data point marker location
 	MarkerPosition() (*fyne.Position, *fyne.Position)
 
