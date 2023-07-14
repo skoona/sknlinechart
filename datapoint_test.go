@@ -26,9 +26,13 @@ var _ = Describe("Datapoint Operations", func() {
 		By("should have string values set")
 		Expect(point.ColorName()).NotTo(BeEmpty())
 		Expect(point.Timestamp()).NotTo(BeEmpty())
+		Expect(point.ExternalID()).NotTo(BeEmpty())
 
 		By("should have float32 value set from new")
 		Expect(point.Value()).To(BeNumerically("==", float32(62.4)))
+
+		By("should return a valid copy of current datapoint")
+		Expect(point.Copy()).To(Equal(point))
 
 		By("should be able to change string values")
 		point.SetColorName(theme.ColorBlue)

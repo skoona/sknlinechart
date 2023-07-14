@@ -27,10 +27,12 @@ func NewChartDatapoint(value float32, colorName, timestamp string) ChartDatapoin
 }
 func (d *chartDatapoint) Copy() ChartDatapoint {
 	return &chartDatapoint{
-		value:      d.value,
-		colorName:  strings.Clone(d.colorName),
-		timestamp:  strings.Clone(d.timestamp),
-		externalID: strings.Clone(d.externalID),
+		value:                d.value,
+		colorName:            strings.Clone(d.colorName),
+		timestamp:            strings.Clone(d.timestamp),
+		externalID:           strings.Clone(d.externalID),
+		markerTopPosition:    &fyne.Position{0, 0},
+		markerBottomPosition: &fyne.Position{0, 0},
 	}
 }
 func (d *chartDatapoint) Value() float32 {
