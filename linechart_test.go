@@ -15,13 +15,11 @@ var _ = Describe("verify line chart initial state", func() {
 
 	It("should accept minimum number of points on create", func() {
 		lc, err := makeUI("Testing", "Through Widget", 0)
-		//_ = lc.MinSize()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(reflect.TypeOf(lc).String()).To(Equal("*sknlinechart.LineChartSkn"))
 	})
 	It("should accept maximum number of points on create", func() {
 		lc, err := makeUI("Testing", "Through Widget", 120)
-		//_ = lc.MinSize()
 		Expect(err).NotTo(HaveOccurred())
 		Expect(reflect.TypeOf(lc).String()).To(Equal("*sknlinechart.LineChartSkn"))
 	})

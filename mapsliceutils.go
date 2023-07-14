@@ -22,7 +22,7 @@ func RemoveIndexFromSlice[K comparable](index int, slice []K) []K {
 func ShiftSlice[K comparable](newData K, slice []K) []K {
 	idx := 0
 	if len(slice) == 0 {
-		return slice
+		return append(slice, newData)
 	}
 	shorter := append(slice[:idx], slice[idx+1:]...)
 	shorter = append(shorter, newData)
