@@ -6,7 +6,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
-	"github.com/skoona/sknlinechart"
+	lc "github.com/skoona/sknlinechart"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -14,8 +14,8 @@ import (
 	"time"
 )
 
-func makeChart(title, footer string) (sknlinechart.SknLineChart, error) {
-	dataPoints := map[string][]*sknlinechart.LineChartDatapoint{} // legend, points
+func makeChart(title, footer string) (lc.LineChart, error) {
+	dataPoints := map[string][]*lc.ChartDatapoint{} // legend, points
 
 	rand.NewSource(1000.0)
 	for x := 1; x < 130; x++ {
@@ -25,7 +25,7 @@ func makeChart(title, footer string) (sknlinechart.SknLineChart, error) {
 		} else if val < 30.0 {
 			val = 30.0
 		}
-		point := sknlinechart.NewLineChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC3339))
+		point := lc.NewChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC3339))
 		dataPoints["Humidity"] = append(dataPoints["Humidity"], &point)
 	}
 	for x := 1; x < 130; x++ {
@@ -35,11 +35,11 @@ func makeChart(title, footer string) (sknlinechart.SknLineChart, error) {
 		} else if val < 55.0 {
 			val = 55.0
 		}
-		point := sknlinechart.NewLineChartDatapoint(val, theme.ColorRed, time.Now().Format(time.RFC3339))
+		point := lc.NewChartDatapoint(val, theme.ColorRed, time.Now().Format(time.RFC3339))
 		dataPoints["Temperature"] = append(dataPoints["Temperature"], &point)
 	}
 
-	lineChart, err := sknlinechart.NewLineChart(title, footer, &dataPoints)
+	lineChart, err := lc.NewLineChart(title, footer, &dataPoints)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -66,8 +66,8 @@ func main() {
 
 	lineChart, err := makeChart("Skoona Line Chart", "Example Time Series")
 
-	go (func(chart sknlinechart.SknLineChart) {
-		var many []*sknlinechart.LineChartDatapoint
+	go (func(chart lc.LineChart) {
+		var many []*lc.ChartDatapoint
 		for x := 1; x < 121; x++ {
 			val := rand.Float32() * 25.0
 			if val > 50.0 {
@@ -75,7 +75,7 @@ func main() {
 			} else if val < 5.0 {
 				val = 5.0
 			}
-			point := sknlinechart.NewLineChartDatapoint(val, theme.ColorPurple, time.Now().Format(time.RFC3339))
+			point := lc.NewChartDatapoint(val, theme.ColorPurple, time.Now().Format(time.RFC3339))
 			many = append(many, &point)
 		}
 		time.Sleep(10 * time.Second)
@@ -88,7 +88,7 @@ func main() {
 			if windowClosed {
 				break
 			}
-			point := sknlinechart.NewLineChartDatapoint(rand.Float32()*110.0, theme.ColorYellow, time.Now().Format(time.RFC3339))
+			point := lc.NewChartDatapoint(rand.Float32()*110.0, theme.ColorYellow, time.Now().Format(time.RFC3339))
 			chart.ApplyDataPoint("SteadyStream", &point)
 			if windowClosed {
 				break

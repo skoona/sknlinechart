@@ -11,7 +11,7 @@ import (
 
 var _ = Describe("Maps and slices utilities", func() {
 
-	var dataPoints []*sknlinechart.LineChartDatapoint
+	var dataPoints []*sknlinechart.ChartDatapoint
 
 	BeforeEach(func() {
 		rand.NewSource(1000.0)
@@ -22,17 +22,17 @@ var _ = Describe("Maps and slices utilities", func() {
 			} else if val < 30.0 {
 				val = 30.0
 			}
-			point := sknlinechart.NewLineChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC3339))
+			point := sknlinechart.NewChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC3339))
 			dataPoints = append(dataPoints, &point)
 		}
 	})
 
 	Describe("shift data points through slice limited to 10 objects", func() {
-		var first, last, newOne sknlinechart.LineChartDatapoint
+		var first, last, newOne sknlinechart.ChartDatapoint
 		var originalCount int
 
 		BeforeEach(func() {
-			newOne = sknlinechart.NewLineChartDatapoint(960.13, "TEST", time.Now().Format(time.RFC3339))
+			newOne = sknlinechart.NewChartDatapoint(960.13, "TEST", time.Now().Format(time.RFC3339))
 			first = *dataPoints[0]
 			last = *dataPoints[(len(dataPoints) - 1)]
 			originalCount = len(dataPoints)
@@ -65,7 +65,7 @@ var _ = Describe("Maps and slices utilities", func() {
 			Expect(len(dataPoints)).To(Equal(originalCount - 1))
 		})
 		It("should detect empty slice and return it empty", func() {
-			var a []*sknlinechart.LineChartDatapoint
+			var a []*sknlinechart.ChartDatapoint
 			b := sknlinechart.RemoveIndexFromSlice(0, a)
 			Expect(len(a)).To(Equal(len(b)))
 			Expect(a).To(Equal(b))

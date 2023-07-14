@@ -16,7 +16,7 @@ import (
 )
 
 /*
- * SknLineChart
+ * LineChart
  * Custom Fyne 2.0 Widget
  * Strategy
  * 1. Define Widget Named/Exported Struct
@@ -58,7 +58,7 @@ import (
 	"strings"
 )
 
-// LineChartSkn widget implements the SknLineChart interface
+// LineChartSkn widget implements the LineChart interface
 // to display multiple series of data points
 // which will roll off older point beyond the 120 point limit.
 type LineChartSkn struct {
@@ -66,23 +66,23 @@ type LineChartSkn struct {
 	desktop.Hoverable       // support mouse tracking
 	desktop.Mouseable       // Mouse Clicks
 	datapointOrSeriesAdded  bool
-	DataPointXLimit         int
-	EnableDataPointMarkers  bool
-	EnableHorizGridLines    bool
-	EnableVertGridLines     bool
-	EnableMousePointDisplay bool
-	TopLeftLabel            string // The text to display in the widget
-	TopCenteredLabel        string
-	TopRightLabel           string
-	LeftMiddleLabel         string
-	RightMiddleLabel        string
-	BottomLeftLabel         string
-	BottomCenteredLabel     string
-	BottomRightLabel        string
+	dataPointXLimit         int
+	enableDataPointMarkers  bool
+	enableHorizGridLines    bool
+	enableVertGridLines     bool
+	enableMousePointDisplay bool
+	topLeftLabel            string // The text to display in the widget
+	topCenteredLabel        string
+	topRightLabel           string
+	leftMiddleLabel         string
+	rightMiddleLabel        string
+	bottomLeftLabel         string
+	bottomCenteredLabel     string
+	bottomRightLabel        string
 	mouseDisplayStr         string
 	mouseDisplayPosition    *fyne.Position
 	mouseDisplayFrameColor  string
-	dataPoints              map[string][]*LineChartDatapoint
+	dataPoints              map[string][]*ChartDatapoint
 	dataPointScale          fyne.Size
 	minSize                 fyne.Size
 	propertiesLock          sync.RWMutex
@@ -92,7 +92,7 @@ type LineChartSkn struct {
 	objectsCache []fyne.CanvasObject
 }
 
-var _ SknLineChart = (*LineChartSkn)(nil)
+var _ LineChart = (*LineChartSkn)(nil)
 var _ fyne.Widget = (*LineChartSkn)(nil)
 var _ fyne.CanvasObject = (*LineChartSkn)(nil)
 
@@ -101,7 +101,7 @@ var _ fyne.CanvasObject = (*LineChartSkn)(nil)
 //
 // can return a valid chart object and an error object; errors really should be handled
 // and are caused by data points exceeding the container limit of 120; they will be truncated
-func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]*LineChartDatapoint) (SknLineChart, error) {
+func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]*ChartDatapoint) (LineChart, error) {
 	err := errors.New("")
 	dpl := 120
 	for key, points := range *dataPoints {
@@ -120,23 +120,23 @@ func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]*LineCh
 	w := &LineChartSkn{ // Create this widget with an initial text value
 		dataPoints:              *dataPoints,
 		datapointOrSeriesAdded:  true,
-		DataPointXLimit:         dpl,
+		dataPointXLimit:         dpl,
 		dataPointScale:          fyne.NewSize(float32(dpl), 110.0),
-		EnableDataPointMarkers:  true,
-		EnableHorizGridLines:    true,
-		EnableVertGridLines:     true,
-		EnableMousePointDisplay: true,
+		enableDataPointMarkers:  true,
+		enableHorizGridLines:    true,
+		enableVertGridLines:     true,
+		enableMousePointDisplay: true,
 		mouseDisplayStr:         "",
 		mouseDisplayPosition:    &fyne.Position{},
 		mouseDisplayFrameColor:  string(theme.ColorNameForeground),
-		TopLeftLabel:            "",
-		TopCenteredLabel:        topTitle,
-		TopRightLabel:           "",
-		LeftMiddleLabel:         "",
-		RightMiddleLabel:        "",
-		BottomLeftLabel:         "",
-		BottomCenteredLabel:     bottomTitle,
-		BottomRightLabel:        "",
+		topLeftLabel:            "",
+		topCenteredLabel:        topTitle,
+		topRightLabel:           "",
+		leftMiddleLabel:         "",
+		rightMiddleLabel:        "",
+		bottomLeftLabel:         "",
+		bottomCenteredLabel:     bottomTitle,
+		bottomRightLabel:        "",
 		minSize:                 fyne.NewSize(420+theme.Padding()*4, 315+theme.Padding()*4),
 		objectsCache:            []fyne.CanvasObject{}, // everything except datapoints, markers, and mousebox
 		propertiesLock:          sync.RWMutex{},
@@ -160,127 +160,127 @@ func (w *LineChartSkn) SetMinSize(s fyne.Size) {
 
 // GetTopLeftLabel return text from top left label
 func (w *LineChartSkn) GetTopLeftLabel() string {
-	return w.TopLeftLabel
+	return w.topLeftLabel
 }
 
 // GetTitle return text of the chart's title from top center
 func (w *LineChartSkn) GetTitle() string {
-	return w.TopCenteredLabel
+	return w.topCenteredLabel
 }
 
 // IsDataPointMarkersEnabled returns state of chart's use of data point markers on series data
 func (w *LineChartSkn) IsDataPointMarkersEnabled() bool {
-	return w.EnableDataPointMarkers
+	return w.enableDataPointMarkers
 }
 
 // IsHorizGridLinesEnabled returns state of chart's display of horizontal grid line
 func (w *LineChartSkn) IsHorizGridLinesEnabled() bool {
-	return w.EnableHorizGridLines
+	return w.enableHorizGridLines
 }
 
 // IsVertGridLinesEnabled returns state of chart's display of vertical grid line
 func (w *LineChartSkn) IsVertGridLinesEnabled() bool {
-	return w.EnableVertGridLines
+	return w.enableVertGridLines
 }
 
 // IsMousePointDisplayEnabled return state of mouse popups when hovered over a chart datapoint
 func (w *LineChartSkn) IsMousePointDisplayEnabled() bool {
-	return w.EnableMousePointDisplay
+	return w.enableMousePointDisplay
 }
 
 // GetTopRightLabel returns text of top right label
 func (w *LineChartSkn) GetTopRightLabel() string {
-	return w.TopRightLabel
+	return w.topRightLabel
 }
 
 // GetMiddleLeftLabel returns text of middle left label
 func (w *LineChartSkn) GetMiddleLeftLabel() string {
-	return w.LeftMiddleLabel
+	return w.leftMiddleLabel
 }
 
 // GetMiddleRightLabel returns text of middle right label
 func (w *LineChartSkn) GetMiddleRightLabel() string {
-	return w.RightMiddleLabel
+	return w.rightMiddleLabel
 }
 
 // GetBottomLeftLabel returns text of bottom left label
 func (w *LineChartSkn) GetBottomLeftLabel() string {
-	return w.BottomLeftLabel
+	return w.bottomLeftLabel
 }
 
 // GetBottomCenteredLabel returns text of bottom center label
 func (w *LineChartSkn) GetBottomCenteredLabel() string {
-	return w.BottomCenteredLabel
+	return w.bottomCenteredLabel
 }
 
 // GetBottomRightLabel returns text of bottom right label
 func (w *LineChartSkn) GetBottomRightLabel() string {
-	return w.BottomRightLabel
+	return w.bottomRightLabel
 }
 
 // SetTopLeftLabel sets text to be display on chart at top left
 func (w *LineChartSkn) SetTopLeftLabel(newValue string) {
-	w.TopLeftLabel = newValue
+	w.topLeftLabel = newValue
 }
 
 // SetTitle sets text to be display on chart at top center
 func (w *LineChartSkn) SetTitle(newValue string) {
-	w.TopCenteredLabel = newValue
+	w.topCenteredLabel = newValue
 }
 
 // SetTopRightLabel changes displayed text, empty disables display
 func (w *LineChartSkn) SetTopRightLabel(newValue string) {
-	w.TopRightLabel = newValue
+	w.topRightLabel = newValue
 }
 
 // SetMiddleLeftLabel changes displayed text, empty disables display
 func (w *LineChartSkn) SetMiddleLeftLabel(newValue string) {
-	w.LeftMiddleLabel = newValue
+	w.leftMiddleLabel = newValue
 }
 
 // SetMiddleRightLabel changes displayed text, empty disables display
 func (w *LineChartSkn) SetMiddleRightLabel(newValue string) {
-	w.RightMiddleLabel = newValue
+	w.rightMiddleLabel = newValue
 }
 
 // SetBottomLeftLabel changes displayed text, empty disables display
 func (w *LineChartSkn) SetBottomLeftLabel(newValue string) {
-	w.BottomLeftLabel = newValue
+	w.bottomLeftLabel = newValue
 }
 
 // SetBottomRightLabel changes displayed text, empty disables display
 func (w *LineChartSkn) SetBottomRightLabel(newValue string) {
-	w.BottomRightLabel = newValue
+	w.bottomRightLabel = newValue
 }
 
 // SetBottomCenteredLabel changes displayed text, empty disables display
 func (w *LineChartSkn) SetBottomCenteredLabel(newValue string) {
-	w.BottomCenteredLabel = newValue
+	w.bottomCenteredLabel = newValue
 }
 
 // SetDataPointMarkers enables data point markers on display series points
 func (w *LineChartSkn) SetDataPointMarkers(enable bool) {
-	w.EnableDataPointMarkers = enable
+	w.enableDataPointMarkers = enable
 }
 
 // SetHorizGridLines enables chart horizontal grid lines
 func (w *LineChartSkn) SetHorizGridLines(enable bool) {
-	w.EnableHorizGridLines = enable
+	w.enableHorizGridLines = enable
 }
 
 // SetVertGridLines enables chart vertical grid lines
 func (w *LineChartSkn) SetVertGridLines(enable bool) {
-	w.EnableVertGridLines = enable
+	w.enableVertGridLines = enable
 }
 
 // SetMousePointDisplay true/false, enables data point display under mouse pointer
 func (w *LineChartSkn) SetMousePointDisplay(enable bool) {
-	w.EnableMousePointDisplay = enable
+	w.enableMousePointDisplay = enable
 }
 
 // ApplyDataSeries adds a new series of data to existing chart set.
 // throws error if new series exceeds containers point limit
-func (w *LineChartSkn) ApplyDataSeries(seriesName string, newSeries []*LineChartDatapoint) error {
+func (w *LineChartSkn) ApplyDataSeries(seriesName string, newSeries []*ChartDatapoint) error {
 	startTime := time.Now()
 
 	w.debugLog("LineChartSkn::ApplyDataSeries() ENTER")
@@ -289,7 +289,7 @@ func (w *LineChartSkn) ApplyDataSeries(seriesName string, newSeries []*LineChart
 		return fmt.Errorf("ApplyDataSeries() no active widget")
 	}
 
-	if len(newSeries) <= w.DataPointXLimit {
+	if len(newSeries) <= w.dataPointXLimit {
 		w.propertiesLock.Lock()
 		w.dataPoints[seriesName] = newSeries
 		w.datapointOrSeriesAdded = true
@@ -297,7 +297,7 @@ func (w *LineChartSkn) ApplyDataSeries(seriesName string, newSeries []*LineChart
 		w.Refresh()
 	} else {
 		w.debugLog("LineChartSkn::ApplyDataSeries() ERROR EXIT")
-		return fmt.Errorf("[%s] data series datapoints limit exceeded. limit:%d, count:%d", seriesName, w.DataPointXLimit, len(newSeries))
+		return fmt.Errorf("[%s] data series datapoints limit exceeded. limit:%d, count:%d", seriesName, w.dataPointXLimit, len(newSeries))
 	}
 	w.debugLog("LineChartSkn::ApplyDataSeries() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
 	return nil
@@ -305,7 +305,7 @@ func (w *LineChartSkn) ApplyDataSeries(seriesName string, newSeries []*LineChart
 
 // ApplyDataPoint adds a new datapoint to an existing series
 // will shift out the oldest point if containers limit is exceeded
-func (w *LineChartSkn) ApplyDataPoint(seriesName string, newDataPoint *LineChartDatapoint) {
+func (w *LineChartSkn) ApplyDataPoint(seriesName string, newDataPoint *ChartDatapoint) {
 	startTime := time.Now()
 
 	w.debugLog("LineChartSkn::ApplyDataPoint() ENTER")
@@ -315,7 +315,7 @@ func (w *LineChartSkn) ApplyDataPoint(seriesName string, newDataPoint *LineChart
 
 	w.propertiesLock.Lock()
 
-	if len(w.dataPoints[seriesName]) <= w.DataPointXLimit {
+	if len(w.dataPoints[seriesName]) <= w.dataPointXLimit {
 		w.dataPoints[seriesName] = append(w.dataPoints[seriesName], newDataPoint)
 	} else {
 		w.dataPoints[seriesName] = ShiftSlice(newDataPoint, w.dataPoints[seriesName])
@@ -330,10 +330,10 @@ func (w *LineChartSkn) ApplyDataPoint(seriesName string, newDataPoint *LineChart
 func (w *LineChartSkn) MouseDown(me *desktop.MouseEvent) {
 	w.debugLog("LineChartSkn::MouseDown() ENTER")
 	if me.Button == desktop.MouseButtonSecondary {
-		w.EnableDataPointMarkers = !w.EnableDataPointMarkers
+		w.enableDataPointMarkers = !w.enableDataPointMarkers
 		w.Refresh()
 	} else if me.Button == desktop.MouseButtonPrimary {
-		w.EnableMousePointDisplay = !w.EnableMousePointDisplay
+		w.enableMousePointDisplay = !w.enableMousePointDisplay
 		w.Refresh()
 	}
 	w.debugLog("LineChartSkn::MouseDown() EXIT")
@@ -354,7 +354,7 @@ func (w *LineChartSkn) MouseMoved(me *desktop.MouseEvent) {
 	startTime := time.Now()
 
 	w.debugLog("LineChartSkn::MouseMoved() ENTER")
-	if !w.EnableMousePointDisplay {
+	if !w.enableMousePointDisplay {
 		w.debugLog("LineChartSkn::MouseMoved(disabled) EXIT")
 		return
 	}
@@ -462,7 +462,7 @@ var _ fyne.WidgetRenderer = (*lineChartRenderer)(nil)
 // and all the objectsCache to be displayed for this custom widget
 //
 // Note: Do not size or move canvas objects here.
-func newLineChartRenderer(lineChart *LineChartSkn) *lineChartRenderer {
+func newLineChartRenderer(lineChart *LineChartSkn) fyne.WidgetRenderer {
 	lineChart.debugLog("::newLineChartRenderer() ENTER")
 	startTime := time.Now()
 	lineChart.propertiesLock.Lock()
@@ -533,7 +533,7 @@ func newLineChartRenderer(lineChart *LineChartSkn) *lineChartRenderer {
 		}
 	}
 
-	topCenteredDesc := canvas.NewText(lineChart.TopCenteredLabel, theme.ForegroundColor())
+	topCenteredDesc := canvas.NewText(lineChart.topCenteredLabel, theme.ForegroundColor())
 	topCenteredDesc.TextSize = 24
 	topCenteredDesc.TextStyle = fyne.TextStyle{
 		Bold:   true,
@@ -541,7 +541,7 @@ func newLineChartRenderer(lineChart *LineChartSkn) *lineChartRenderer {
 	}
 	objs = append(objs, topCenteredDesc)
 
-	bottomCenteredDesc := canvas.NewText(lineChart.BottomCenteredLabel, theme.ForegroundColor())
+	bottomCenteredDesc := canvas.NewText(lineChart.bottomCenteredLabel, theme.ForegroundColor())
 	bottomCenteredDesc.TextSize = 16
 	bottomCenteredDesc.TextStyle = fyne.TextStyle{
 		Bold:   false,
@@ -551,7 +551,7 @@ func newLineChartRenderer(lineChart *LineChartSkn) *lineChartRenderer {
 
 	// vertical text for X/Y legends since no text rotation is available
 	lBox := container.NewVBox()
-	for _, c := range lineChart.LeftMiddleLabel {
+	for _, c := range lineChart.leftMiddleLabel {
 		lBox.Add(
 			canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground))),
 		)
@@ -559,17 +559,17 @@ func newLineChartRenderer(lineChart *LineChartSkn) *lineChartRenderer {
 	objs = append(objs, lBox)
 
 	rBox := container.NewVBox()
-	for _, c := range lineChart.RightMiddleLabel {
+	for _, c := range lineChart.rightMiddleLabel {
 		rBox.Add(
 			canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground))),
 		)
 	}
 	objs = append(objs, rBox)
 
-	tl := canvas.NewText(lineChart.TopLeftLabel, theme.ForegroundColor())
-	tr := canvas.NewText(lineChart.TopRightLabel, theme.ForegroundColor())
-	bl := canvas.NewText(lineChart.BottomLeftLabel, theme.ForegroundColor())
-	br := canvas.NewText(lineChart.BottomRightLabel, theme.ForegroundColor())
+	tl := canvas.NewText(lineChart.topLeftLabel, theme.ForegroundColor())
+	tr := canvas.NewText(lineChart.topRightLabel, theme.ForegroundColor())
+	bl := canvas.NewText(lineChart.bottomLeftLabel, theme.ForegroundColor())
+	br := canvas.NewText(lineChart.bottomRightLabel, theme.ForegroundColor())
 	objs = append(objs, tl, tr, bl, br)
 
 	// save all except data points, markers, and mouse box
@@ -609,7 +609,7 @@ func (r *lineChartRenderer) Refresh() {
 	}
 
 	r.leftMiddleBox.RemoveAll()
-	for _, c := range r.widget.LeftMiddleLabel {
+	for _, c := range r.widget.leftMiddleLabel {
 		z := canvas.NewText(
 			strings.ToUpper(string(c)),
 			theme.PrimaryColorNamed(string(theme.ColorNameForeground)))
@@ -619,7 +619,7 @@ func (r *lineChartRenderer) Refresh() {
 	r.leftMiddleBox.Refresh()
 
 	r.rightMiddleBox.RemoveAll()
-	for _, c := range r.widget.RightMiddleLabel {
+	for _, c := range r.widget.rightMiddleLabel {
 		z := canvas.NewText(
 			strings.ToUpper(string(c)),
 			theme.PrimaryColorNamed(string(theme.ColorNameForeground)))
@@ -629,23 +629,26 @@ func (r *lineChartRenderer) Refresh() {
 	r.rightMiddleBox.Refresh()
 
 	r.widget.propertiesLock.RLock()
-	r.topLeftDesc.Text = r.widget.TopLeftLabel
-	r.topCenteredDesc.Text = r.widget.TopCenteredLabel
-	r.topRightDesc.Text = r.widget.TopRightLabel
-	r.bottomLeftDesc.Text = r.widget.BottomLeftLabel
-	r.bottomCenteredDesc.Text = r.widget.BottomCenteredLabel
-	r.bottomRightDesc.Text = r.widget.BottomRightLabel
+	r.topLeftDesc.Text = r.widget.topLeftLabel
+	r.topCenteredDesc.Text = r.widget.topCenteredLabel
+	r.topRightDesc.Text = r.widget.topRightLabel
+	r.bottomLeftDesc.Text = r.widget.bottomLeftLabel
+	r.bottomCenteredDesc.Text = r.widget.bottomCenteredLabel
+	r.bottomRightDesc.Text = r.widget.bottomRightLabel
 	for _, v := range r.widget.objectsCache {
 		v.Refresh()
 	}
 	r.widget.datapointOrSeriesAdded = false
 	r.widget.propertiesLock.RUnlock()
 
+	r.mouseDisplayContainer.Hide()
 	r.widget.propertiesLock.Lock()
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
 	r.mouseDisplayContainer.Objects[1].(*widget.Label).SetText(r.widget.mouseDisplayStr)
 	r.widget.propertiesLock.Unlock()
-	r.mouseDisplayContainer.Refresh()
+	if r.widget.mouseDisplayStr != "" {
+		r.mouseDisplayContainer.Show()
+	}
 
 	r.widget.debugLog("lineChartRenderer::Refresh() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
 }
@@ -849,14 +852,14 @@ func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 	} else {
 		r.topRightDesc.Hide()
 	}
-	if r.widget.LeftMiddleLabel != "" {
+	if r.widget.leftMiddleLabel != "" {
 		if !r.leftMiddleBox.Visible() {
 			r.leftMiddleBox.Show()
 		}
 	} else {
 		r.leftMiddleBox.Hide()
 	}
-	if r.widget.RightMiddleLabel != "" {
+	if r.widget.rightMiddleLabel != "" {
 		if !r.rightMiddleBox.Visible() {
 			r.rightMiddleBox.Show()
 		}
@@ -886,7 +889,7 @@ func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 	}
 
 	for _, line := range r.xLines {
-		if r.widget.EnableHorizGridLines {
+		if r.widget.enableHorizGridLines {
 			if !line.Visible() {
 				line.Show()
 			}
@@ -895,7 +898,7 @@ func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 		}
 	}
 	for _, line := range r.yLines {
-		if r.widget.EnableVertGridLines {
+		if r.widget.enableVertGridLines {
 			if !line.Visible() {
 				line.Show()
 			}
@@ -909,7 +912,7 @@ func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 			objs = append(objs, line)
 			marker := r.dataPointMarkers[key][idx]
 			objs = append(objs, marker)
-			if r.widget.EnableDataPointMarkers {
+			if r.widget.enableDataPointMarkers {
 				if !marker.Visible() {
 					marker.Show()
 				}
@@ -920,7 +923,7 @@ func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 	}
 
 	objs = append(objs, r.mouseDisplayContainer)
-	if r.widget.EnableMousePointDisplay {
+	if r.widget.enableMousePointDisplay {
 		if r.mouseDisplayContainer.Objects[1].(*widget.Label).Text != "" {
 			if !r.mouseDisplayContainer.Visible() {
 				r.mouseDisplayContainer.Show()

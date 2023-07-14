@@ -2,8 +2,8 @@ package sknlinechart
 
 import "fyne.io/fyne/v2"
 
-// LineChartDatapoint data container interface for SknLineChart
-type LineChartDatapoint interface {
+// ChartDatapoint data container interface for LineChart
+type ChartDatapoint interface {
 	Value() float32
 	SetValue(y float32)
 
@@ -20,8 +20,8 @@ type LineChartDatapoint interface {
 	SetMarkerPosition(top *fyne.Position, bottom *fyne.Position)
 }
 
-// SknLineChart feature list
-type SknLineChart interface {
+// LineChart feature list
+type LineChart interface {
 	// Chart Attributes
 
 	IsDataPointMarkersEnabled() bool // mouse button 2 toggles
@@ -59,11 +59,11 @@ type SknLineChart interface {
 
 	// ApplyDataSeries add a whole data series at once
 	// expect this will rarely be used, since loading more than 120 point will raise error
-	ApplyDataSeries(seriesName string, newSeries []*LineChartDatapoint) error
+	ApplyDataSeries(seriesName string, newSeries []*ChartDatapoint) error
 
 	// ApplyDataPoint primary method to add another data point to any series
 	// If series has more than 120 points, point 0 will be rolled out making room for this one
-	ApplyDataPoint(seriesName string, newDataPoint *LineChartDatapoint)
+	ApplyDataPoint(seriesName string, newDataPoint *ChartDatapoint)
 
 	// SetMinSize set the minimum size limit for the linechart
 	SetMinSize(s fyne.Size)

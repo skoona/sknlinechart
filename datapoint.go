@@ -2,47 +2,51 @@ package sknlinechart
 
 import (
 	"fyne.io/fyne/v2"
+	"strings"
 )
 
-type lineChartDatapoint struct {
+type chartDatapoint struct {
 	value                float32
-	markerTopPosition    *fyne.Position
-	markerBottomPosition *fyne.Position
 	colorName            string
 	timestamp            string
+	markerTopPosition    *fyne.Position
+	markerBottomPosition *fyne.Position
 }
 
-func NewLineChartDatapoint(value float32, colorName, timestamp string) LineChartDatapoint {
-	return &lineChartDatapoint{
+func NewChartDatapoint(value float32, colorName, timestamp string) ChartDatapoint {
+	return &chartDatapoint{
 		value:                value,
 		colorName:            colorName,
 		timestamp:            timestamp,
-		markerTopPosition:    &fyne.Position{},
-		markerBottomPosition: &fyne.Position{},
+		markerTopPosition:    &fyne.Position{0, 0},
+		markerBottomPosition: &fyne.Position{0, 0},
 	}
 }
-func (d *lineChartDatapoint) Value() float32 {
+func (d *chartDatapoint) Copy() ChartDatapoint {
+	return NewChartDatapoint(d.value, strings.Clone(d.colorName), strings.Clone(d.timestamp))
+}
+func (d *chartDatapoint) Value() float32 {
 	return d.value
 }
-func (d *lineChartDatapoint) MarkerPosition() (*fyne.Position, *fyne.Position) {
+func (d *chartDatapoint) MarkerPosition() (*fyne.Position, *fyne.Position) {
 	return d.markerTopPosition, d.markerBottomPosition
 }
-func (d *lineChartDatapoint) ColorName() string {
+func (d *chartDatapoint) ColorName() string {
 	return d.colorName
 }
-func (d *lineChartDatapoint) Timestamp() string {
+func (d *chartDatapoint) Timestamp() string {
 	return d.timestamp
 }
-func (d *lineChartDatapoint) SetValue(v float32) {
+func (d *chartDatapoint) SetValue(v float32) {
 	d.value = v
 }
-func (d *lineChartDatapoint) SetMarkerPosition(top *fyne.Position, bottom *fyne.Position) {
+func (d *chartDatapoint) SetMarkerPosition(top *fyne.Position, bottom *fyne.Position) {
 	d.markerTopPosition = top
 	d.markerBottomPosition = bottom
 }
-func (d *lineChartDatapoint) SetColorName(n string) {
+func (d *chartDatapoint) SetColorName(n string) {
 	d.colorName = n
 }
-func (d *lineChartDatapoint) SetTimestamp(t string) {
+func (d *chartDatapoint) SetTimestamp(t string) {
 	d.timestamp = t
 }

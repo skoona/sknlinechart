@@ -86,8 +86,8 @@ var _ = Describe("verify line chart initial state", func() {
 
 })
 
-func makeUI(title, footer string, points int) (sknlinechart.SknLineChart, error) {
-	var dataPoints = map[string][]*sknlinechart.LineChartDatapoint{} // legend, points
+func makeUI(title, footer string, points int) (sknlinechart.LineChart, error) {
+	var dataPoints = map[string][]*sknlinechart.ChartDatapoint{} // legend, points
 	if points != 0 {
 		rand.NewSource(1000.0)
 		for x := 1; x < points+1; x++ {
@@ -97,7 +97,7 @@ func makeUI(title, footer string, points int) (sknlinechart.SknLineChart, error)
 			} else if val < 30.0 {
 				val = 30.0
 			}
-			point := sknlinechart.NewLineChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC3339))
+			point := sknlinechart.NewChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC3339))
 			dataPoints["Testing"] = append(dataPoints["Testing"], &point)
 		}
 	}
