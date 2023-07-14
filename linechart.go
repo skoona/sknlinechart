@@ -657,7 +657,7 @@ func (r *lineChartRenderer) Refresh() {
 	r.widget.debugLog("lineChartRenderer::Refresh() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
 }
 
-// LayoutSeries layout one series to position new elements
+// layoutSeries layout one series to position new elements
 func (r *lineChartRenderer) layoutSeries(series string) {
 	startTime := time.Now()
 
@@ -970,8 +970,8 @@ func (r *lineChartRenderer) verifyDataPoints() {
 			r.dataPoints[key] = []*canvas.Line{}
 			r.dataPointMarkers[key] = []*canvas.Circle{}
 		}
+		changed = false
 		for idx, point := range points {
-			changed = false
 			if idx > (len(r.dataPoints[key]) - 1) { // add added points
 				changed = true
 				x := canvas.NewLine(theme.PrimaryColorNamed((*point).ColorName()))
@@ -981,9 +981,9 @@ func (r *lineChartRenderer) verifyDataPoints() {
 				z.StrokeWidth = 4.0
 				r.dataPointMarkers[key] = append(r.dataPointMarkers[key], z)
 			}
-			if changed {
-				changedKeys = append(changedKeys, key)
-			}
+		}
+		if changed {
+			changedKeys = append(changedKeys, key)
 		}
 	}
 	if len(changedKeys) > 0 {
