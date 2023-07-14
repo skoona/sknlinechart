@@ -34,12 +34,6 @@ type SknLineChart interface {
 	SetVertGridLines(enable bool)
 	SetMousePointDisplay(enable bool)
 
-	// Info labels
-
-	GetTopLeftLabel() string
-	GetTitle() string
-	GetTopRightLabel() string
-
 	// Scale legend
 
 	GetMiddleLeftLabel() string
@@ -47,6 +41,9 @@ type SknLineChart interface {
 
 	// Info Labels
 
+	GetTopLeftLabel() string
+	GetTitle() string
+	GetTopRightLabel() string
 	GetBottomLeftLabel() string
 	GetBottomCenteredLabel() string
 	GetBottomRightLabel() string
@@ -67,6 +64,9 @@ type SknLineChart interface {
 	// ApplyDataPoint primary method to add another data point to any series
 	// If series has more than 120 points, point 0 will be rolled out making room for this one
 	ApplyDataPoint(seriesName string, newDataPoint *LineChartDatapoint)
+
+	// SetMinSize set the minimum size limit for the linechart
+	SetMinSize(s fyne.Size)
 
 	// EnableDebugLogging turns method entry/exit logging on or off
 	EnableDebugLogging(enable bool)

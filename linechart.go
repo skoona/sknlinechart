@@ -152,6 +152,12 @@ func (w *LineChartSkn) CreateRenderer() fyne.WidgetRenderer {
 	return newLineChartRenderer(w)
 }
 
+// SetMinSize set the minimum size limit for the linechart
+func (w *LineChartSkn) SetMinSize(s fyne.Size) {
+	w.debugLog("LineChartSkn::SetMinSize()")
+	w.minSize = s
+}
+
 // GetTopLeftLabel return text from top left label
 func (w *LineChartSkn) GetTopLeftLabel() string {
 	return w.TopLeftLabel
@@ -602,13 +608,6 @@ func (r *lineChartRenderer) Refresh() {
 		r.verifyDataPoints()
 	}
 
-	r.topLeftDesc.Text = r.widget.TopLeftLabel
-	r.topCenteredDesc.Text = r.widget.TopCenteredLabel
-	r.topRightDesc.Text = r.widget.TopRightLabel
-	r.bottomLeftDesc.Text = r.widget.BottomLeftLabel
-	r.bottomCenteredDesc.Text = r.widget.BottomCenteredLabel
-	r.bottomRightDesc.Text = r.widget.BottomRightLabel
-
 	r.leftMiddleBox.RemoveAll()
 	for _, c := range r.widget.LeftMiddleLabel {
 		z := canvas.NewText(
@@ -617,6 +616,8 @@ func (r *lineChartRenderer) Refresh() {
 		z.TextSize = 12
 		r.leftMiddleBox.Add(z)
 	}
+	r.leftMiddleBox.Refresh()
+
 	r.rightMiddleBox.RemoveAll()
 	for _, c := range r.widget.RightMiddleLabel {
 		z := canvas.NewText(
@@ -625,34 +626,26 @@ func (r *lineChartRenderer) Refresh() {
 		z.TextSize = 12
 		r.rightMiddleBox.Add(z)
 	}
+	r.rightMiddleBox.Refresh()
+
+	r.widget.propertiesLock.RLock()
+	r.topLeftDesc.Text = r.widget.TopLeftLabel
+	r.topCenteredDesc.Text = r.widget.TopCenteredLabel
+	r.topRightDesc.Text = r.widget.TopRightLabel
+	r.bottomLeftDesc.Text = r.widget.BottomLeftLabel
+	r.bottomCenteredDesc.Text = r.widget.BottomCenteredLabel
+	r.bottomRightDesc.Text = r.widget.BottomRightLabel
+	for _, v := range r.widget.objectsCache {
+		v.Refresh()
+	}
+	r.widget.datapointOrSeriesAdded = false
+	r.widget.propertiesLock.RUnlock()
 
 	r.widget.propertiesLock.Lock()
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
 	r.mouseDisplayContainer.Objects[1].(*widget.Label).SetText(r.widget.mouseDisplayStr)
 	r.widget.propertiesLock.Unlock()
 	r.mouseDisplayContainer.Refresh()
-
-	r.widget.propertiesLock.RLock()
-	defer r.widget.propertiesLock.RUnlock()
-
-	for _, v := range r.widget.objectsCache {
-		v.Refresh()
-	}
-	/*
-		if r.widget.datapointOrSeriesAdded {
-			for _, points := range r.dataPoints {
-				for _, point := range points {
-					point.Refresh()
-				}
-			}
-			for _, markers := range r.dataPointMarkers {
-				for _, mark := range markers {
-					mark.Refresh()
-				}
-			}
-		}
-	*/
-	r.widget.datapointOrSeriesAdded = false
 
 	r.widget.debugLog("lineChartRenderer::Refresh() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
 }
