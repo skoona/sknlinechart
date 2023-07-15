@@ -63,8 +63,6 @@ import (
 // which will roll off older point beyond the 120 point limit.
 type LineChartSkn struct {
 	widget.BaseWidget       // Inherit from BaseWidget
-	desktop.Hoverable       // support mouse tracking
-	desktop.Mouseable       // Mouse Clicks
 	datapointOrSeriesAdded  bool
 	dataPointXLimit         int
 	enableDataPointMarkers  bool
@@ -89,8 +87,8 @@ type LineChartSkn struct {
 	debugLoggingEnabled     bool
 	logger                  *log.Logger
 	// Private: Exposed for Testing; DO NOT USE
-	objectsCache          []fyne.CanvasObject
-	pointSelectedCallback func(ChartDatapoint)
+	objectsCache       []fyne.CanvasObject
+	HoverPointCallback func(dataPoint ChartDatapoint)
 }
 
 var _ LineChart = (*LineChartSkn)(nil)
@@ -149,12 +147,15 @@ func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]*ChartD
 
 // CreateRenderer Create the renderer. This is called by the fyne application
 func (w *LineChartSkn) CreateRenderer() fyne.WidgetRenderer {
+	startTime := time.Now()
 	w.debugLog("LineChartSkn::CreateRenderer()")
-	return newLineChartRenderer(w)
+	r := newLineChartRenderer(w)
+	w.debugLog("LineChartSkn::CreateRenderer() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
+	return r
 }
 
-func (w *LineChartSkn) SetPointUnderMouseCallback(f func(datapoint ChartDatapoint)) {
-	w.pointSelectedCallback = f
+func (w *LineChartSkn) SetHoverPointCallback(f func(dataPoint ChartDatapoint)) {
+	w.HoverPointCallback = f
 }
 
 // SetMinSize set the minimum size limit for the linechart
@@ -376,8 +377,8 @@ found:
 					w.debugLog("MouseMoved() matched Mouse: ", me.Position, ", Top: ", top, ", Bottom: ", bottom)
 					value := fmt.Sprint(key, ", Index: ", idx, ", Value: ", (*point).Value(), "    \n[", (*point).Timestamp(), "]")
 					w.enableMouseContainer(value, (*point).ColorName(), &me.Position)
-					if w.pointSelectedCallback != nil {
-						w.pointSelectedCallback((*point).Copy())
+					if w.HoverPointCallback != nil {
+						w.HoverPointCallback((*point).Copy())
 					}
 					matched = true
 					break found
@@ -537,6 +538,7 @@ func newLineChartRenderer(lineChart *LineChartSkn) fyne.WidgetRenderer {
 			dataPoints[key] = append(dataPoints[key], x)
 			z := canvas.NewCircle(theme.PrimaryColorNamed((*point).ColorName()))
 			z.StrokeWidth = 4.0
+			z.Resize(fyne.NewSize(5, 5))
 			dpMaker[key] = append(dpMaker[key], z)
 		}
 	}
@@ -621,7 +623,7 @@ func (r *lineChartRenderer) Refresh() {
 		z := canvas.NewText(
 			strings.ToUpper(string(c)),
 			theme.PrimaryColorNamed(string(theme.ColorNameForeground)))
-		z.TextSize = 12
+		z.TextSize = 14
 		r.leftMiddleBox.Add(z)
 	}
 	r.leftMiddleBox.Refresh()
@@ -631,7 +633,7 @@ func (r *lineChartRenderer) Refresh() {
 		z := canvas.NewText(
 			strings.ToUpper(string(c)),
 			theme.PrimaryColorNamed(string(theme.ColorNameForeground)))
-		z.TextSize = 12
+		z.TextSize = 14
 		r.rightMiddleBox.Add(z)
 	}
 	r.rightMiddleBox.Refresh()
@@ -705,7 +707,7 @@ func (r *lineChartRenderer) layoutSeries(series string) {
 		zb := fyne.NewPos(thisPoint.X+2, thisPoint.Y+2)
 		dpm.Position2 = zb
 		(*point).SetMarkerPosition(&zt, &zb)
-		dpm.Resize(fyne.NewSize(5, 5))
+
 	}
 	r.widget.debugLog("lineChartRenderer::layoutSeries() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
 }
@@ -983,6 +985,7 @@ func (r *lineChartRenderer) verifyDataPoints() {
 				r.dataPoints[key] = append(r.dataPoints[key], x)
 				z := canvas.NewCircle(theme.PrimaryColorNamed((*point).ColorName()))
 				z.StrokeWidth = 4.0
+				z.Resize(fyne.NewSize(5, 5))
 				r.dataPointMarkers[key] = append(r.dataPointMarkers[key], z)
 			}
 		}

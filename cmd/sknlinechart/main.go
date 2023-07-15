@@ -98,7 +98,7 @@ func main() {
 		}
 	})(lineChart)
 
-	lineChart.SetPointUnderMouseCallback(func(p lc.ChartDatapoint) {
+	lineChart.SetHoverPointCallback(func(p lc.ChartDatapoint) {
 		log.Printf("Chart Datapoint Selected Callback: %v\n", p)
 	})
 

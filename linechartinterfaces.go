@@ -77,8 +77,8 @@ type LineChart interface {
 	// EnableDebugLogging turns method entry/exit logging on or off
 	EnableDebugLogging(enable bool)
 
-	// SetPointSelectedCallback method to call when a onscreen datapoint is clicked
-	SetPointUnderMouseCallback(func(datapoint ChartDatapoint))
+	// SetHoverPointCallback method to call when a onscreen datapoint is hovered over by pointer
+	SetHoverPointCallback(func(dataPoint ChartDatapoint))
 
 	// ObjectCount internal use only: return the default ui elements for testing
 	ObjectCount() int
