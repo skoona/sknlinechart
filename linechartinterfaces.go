@@ -78,7 +78,7 @@ type LineChart interface {
 	EnableDebugLogging(enable bool)
 
 	// SetHoverPointCallback method to call when a onscreen datapoint is hovered over by pointer
-	SetHoverPointCallback(func(dataPoint ChartDatapoint))
+	SetOnHoverPointCallback(func(dataPoint ChartDatapoint))
 
 	// ObjectCount internal use only: return the default ui elements for testing
 	ObjectCount() int

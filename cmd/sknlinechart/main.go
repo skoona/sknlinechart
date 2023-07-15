@@ -98,12 +98,12 @@ func main() {
 		}
 	})(lineChart)
 
-	lineChart.SetHoverPointCallback(func(p lc.ChartDatapoint) {
+	lineChart.SetOnHoverPointCallback(func(p lc.ChartDatapoint) {
 		log.Printf("Chart Datapoint Selected Callback: %v\n", p)
 	})
 
-	w.Resize(fyne.NewSize(982, 452))
 	w.SetContent(container.NewPadded(lineChart))
+	w.Resize(fyne.NewSize(982, 452))
 
 	go func(w *fyne.Window, stopFlag chan os.Signal) {
 		signal.Notify(stopFlag, syscall.SIGINT, syscall.SIGTERM)

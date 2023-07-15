@@ -87,8 +87,8 @@ type LineChartSkn struct {
 	debugLoggingEnabled     bool
 	logger                  *log.Logger
 	// Private: Exposed for Testing; DO NOT USE
-	objectsCache       []fyne.CanvasObject
-	HoverPointCallback func(dataPoint ChartDatapoint)
+	objectsCache         []fyne.CanvasObject
+	OnHoverPointCallback func(dataPoint ChartDatapoint)
 }
 
 var _ LineChart = (*LineChartSkn)(nil)
@@ -154,8 +154,8 @@ func (w *LineChartSkn) CreateRenderer() fyne.WidgetRenderer {
 	return r
 }
 
-func (w *LineChartSkn) SetHoverPointCallback(f func(dataPoint ChartDatapoint)) {
-	w.HoverPointCallback = f
+func (w *LineChartSkn) SetOnHoverPointCallback(f func(dataPoint ChartDatapoint)) {
+	w.OnHoverPointCallback = f
 }
 
 // SetMinSize set the minimum size limit for the linechart
@@ -332,22 +332,20 @@ func (w *LineChartSkn) ApplyDataPoint(seriesName string, newDataPoint *ChartData
 	w.debugLog("LineChartSkn::ApplyDataPoint() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
 }
 
-// MouseDown btn.2 toggles markers, btn.1 toggles mouse point display
-func (w *LineChartSkn) MouseDown(me *desktop.MouseEvent) {
-	w.debugLog("LineChartSkn::MouseDown() ENTER")
-	if me.Button == desktop.MouseButtonSecondary {
-		w.enableDataPointMarkers = !w.enableDataPointMarkers
-		w.Refresh()
-	} else if me.Button == desktop.MouseButtonPrimary {
-		w.enableMousePointDisplay = !w.enableMousePointDisplay
-		w.Refresh()
-	}
-	w.debugLog("LineChartSkn::MouseDown() EXIT")
+// Tapped From the Tappable Interface
+func (w *LineChartSkn) Tapped(*fyne.PointEvent) {
+	w.debugLog("LineChartSkn::Tapped() ENTER")
+	w.enableMousePointDisplay = !w.enableMousePointDisplay
+	w.Refresh()
+	w.debugLog("LineChartSkn::Tapped() EXIT")
 }
 
-// MouseUp unused interface method
-func (w *LineChartSkn) MouseUp(*desktop.MouseEvent) {
-	w.debugLog("LineChartSkn::MouseUP()")
+// TappedSecondary From the SecondaryTappable Interface
+func (w *LineChartSkn) TappedSecondary(*fyne.PointEvent) {
+	w.debugLog("LineChartSkn::TappedSecondary() ENTER")
+	w.enableDataPointMarkers = !w.enableDataPointMarkers
+	w.Refresh()
+	w.debugLog("LineChartSkn::TappedSecondary() EXIT")
 }
 
 // MouseIn unused interface method
@@ -377,8 +375,8 @@ found:
 					w.debugLog("MouseMoved() matched Mouse: ", me.Position, ", Top: ", top, ", Bottom: ", bottom)
 					value := fmt.Sprint(key, ", Index: ", idx, ", Value: ", (*point).Value(), "    \n[", (*point).Timestamp(), "]")
 					w.enableMouseContainer(value, (*point).ColorName(), &me.Position)
-					if w.HoverPointCallback != nil {
-						w.HoverPointCallback((*point).Copy())
+					if w.OnHoverPointCallback != nil {
+						w.OnHoverPointCallback((*point).Copy())
 					}
 					matched = true
 					break found
@@ -425,7 +423,7 @@ func (w *LineChartSkn) disableMouseContainer() {
 	w.Refresh()
 }
 
-// MouseUp unused interface method
+// ObjectCount testing method return static object count
 func (w *LineChartSkn) ObjectCount() int {
 	w.debugLog("LineChartSkn::ObjectCount()")
 	return len(w.objectsCache)
@@ -608,6 +606,88 @@ func newLineChartRenderer(lineChart *LineChartSkn) fyne.WidgetRenderer {
 	}
 }
 
+// manageLabelVisibility called by refresh to show/hide as needed
+func (r *lineChartRenderer) manageLabelVisibility() {
+	startTime := time.Now()
+	r.widget.debugLog("lineChartRenderer::manageLabelVisibility() ENTER")
+	if r.topLeftDesc.Text != "" {
+		if !r.topLeftDesc.Visible() {
+			r.topLeftDesc.Show()
+		}
+	} else {
+		r.topLeftDesc.Hide()
+	}
+	if r.topCenteredDesc.Text != "" {
+		if !r.topCenteredDesc.Visible() {
+			r.topCenteredDesc.Show()
+		}
+	} else {
+		r.topCenteredDesc.Hide()
+	}
+	if r.topRightDesc.Text != "" {
+		if !r.topRightDesc.Visible() {
+			r.topRightDesc.Show()
+		}
+	} else {
+		r.topRightDesc.Hide()
+	}
+	if r.widget.leftMiddleLabel != "" {
+		if !r.leftMiddleBox.Visible() {
+			r.leftMiddleBox.Show()
+		}
+	} else {
+		r.leftMiddleBox.Hide()
+	}
+	if r.widget.rightMiddleLabel != "" {
+		if !r.rightMiddleBox.Visible() {
+			r.rightMiddleBox.Show()
+		}
+	} else {
+		r.rightMiddleBox.Hide()
+	}
+	if r.bottomLeftDesc.Text != "" {
+		if !r.bottomLeftDesc.Visible() {
+			r.bottomLeftDesc.Show()
+		}
+	} else {
+		r.bottomLeftDesc.Hide()
+	}
+	if r.bottomCenteredDesc.Text != "" {
+		if !r.bottomCenteredDesc.Visible() {
+			r.bottomCenteredDesc.Show()
+		}
+	} else {
+		r.bottomCenteredDesc.Hide()
+	}
+	if r.bottomRightDesc.Text != "" {
+		if !r.bottomRightDesc.Visible() {
+			r.bottomRightDesc.Show()
+		}
+	} else {
+		r.bottomRightDesc.Hide()
+	}
+
+	for _, line := range r.xLines {
+		if r.widget.enableHorizGridLines {
+			if !line.Visible() {
+				line.Show()
+			}
+		} else {
+			line.Hide()
+		}
+	}
+	for _, line := range r.yLines {
+		if r.widget.enableVertGridLines {
+			if !line.Visible() {
+				line.Show()
+			}
+		} else {
+			line.Hide()
+		}
+	}
+	r.widget.debugLog("lineChartRenderer::manageLabelVisibility() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
+}
+
 // Refresh method is called if the state of the widget changes or the
 // theme is changed
 func (r *lineChartRenderer) Refresh() {
@@ -649,6 +729,9 @@ func (r *lineChartRenderer) Refresh() {
 		v.Refresh()
 	}
 	r.widget.datapointOrSeriesAdded = false
+
+	r.manageLabelVisibility()
+
 	r.widget.propertiesLock.RUnlock()
 
 	r.mouseDisplayContainer.Hide()
@@ -656,8 +739,16 @@ func (r *lineChartRenderer) Refresh() {
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
 	r.mouseDisplayContainer.Objects[1].(*widget.Label).SetText(r.widget.mouseDisplayStr)
 	r.widget.propertiesLock.Unlock()
-	if r.widget.mouseDisplayStr != "" {
-		r.mouseDisplayContainer.Show()
+	if r.widget.enableMousePointDisplay {
+		if r.widget.mouseDisplayStr != "" {
+			if !r.mouseDisplayContainer.Visible() {
+				r.mouseDisplayContainer.Show()
+			}
+		} else {
+			r.mouseDisplayContainer.Hide()
+		}
+	} else {
+		r.mouseDisplayContainer.Hide()
 	}
 
 	r.widget.debugLog("lineChartRenderer::Refresh() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
@@ -707,6 +798,13 @@ func (r *lineChartRenderer) layoutSeries(series string) {
 		zb := fyne.NewPos(thisPoint.X+2, thisPoint.Y+2)
 		dpm.Position2 = zb
 		(*point).SetMarkerPosition(&zt, &zb)
+		if r.widget.enableDataPointMarkers {
+			if !dpm.Visible() {
+				dpm.Show()
+			}
+		} else {
+			dpm.Hide()
+		}
 
 	}
 	r.widget.debugLog("lineChartRenderer::layoutSeries() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
@@ -756,8 +854,6 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 	}
 
 	// data points
-	xp = r.xInc
-	yp = r.yInc * 12
 	for key := range r.widget.dataPoints { // datasource
 		r.layoutSeries(key)
 	}
@@ -841,109 +937,16 @@ func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 	var objs []fyne.CanvasObject
 	objs = append(objs, r.widget.objectsCache...)
 
-	if r.topLeftDesc.Text != "" {
-		if !r.topLeftDesc.Visible() {
-			r.topLeftDesc.Show()
-		}
-	} else {
-		r.topLeftDesc.Hide()
-	}
-	if r.topCenteredDesc.Text != "" {
-		if !r.topCenteredDesc.Visible() {
-			r.topCenteredDesc.Show()
-		}
-	} else {
-		r.topCenteredDesc.Hide()
-	}
-	if r.topRightDesc.Text != "" {
-		if !r.topRightDesc.Visible() {
-			r.topRightDesc.Show()
-		}
-	} else {
-		r.topRightDesc.Hide()
-	}
-	if r.widget.leftMiddleLabel != "" {
-		if !r.leftMiddleBox.Visible() {
-			r.leftMiddleBox.Show()
-		}
-	} else {
-		r.leftMiddleBox.Hide()
-	}
-	if r.widget.rightMiddleLabel != "" {
-		if !r.rightMiddleBox.Visible() {
-			r.rightMiddleBox.Show()
-		}
-	} else {
-		r.rightMiddleBox.Hide()
-	}
-	if r.bottomLeftDesc.Text != "" {
-		if !r.bottomLeftDesc.Visible() {
-			r.bottomLeftDesc.Show()
-		}
-	} else {
-		r.bottomLeftDesc.Hide()
-	}
-	if r.bottomCenteredDesc.Text != "" {
-		if !r.bottomCenteredDesc.Visible() {
-			r.bottomCenteredDesc.Show()
-		}
-	} else {
-		r.bottomCenteredDesc.Hide()
-	}
-	if r.bottomRightDesc.Text != "" {
-		if !r.bottomRightDesc.Visible() {
-			r.bottomRightDesc.Show()
-		}
-	} else {
-		r.bottomRightDesc.Hide()
-	}
-
-	for _, line := range r.xLines {
-		if r.widget.enableHorizGridLines {
-			if !line.Visible() {
-				line.Show()
-			}
-		} else {
-			line.Hide()
-		}
-	}
-	for _, line := range r.yLines {
-		if r.widget.enableVertGridLines {
-			if !line.Visible() {
-				line.Show()
-			}
-		} else {
-			line.Hide()
-		}
-	}
-
 	for key, lines := range r.dataPoints {
 		for idx, line := range lines {
 			objs = append(objs, line)
 			marker := r.dataPointMarkers[key][idx]
 			objs = append(objs, marker)
-			if r.widget.enableDataPointMarkers {
-				if !marker.Visible() {
-					marker.Show()
-				}
-			} else {
-				marker.Hide()
-			}
 		}
 	}
 
 	objs = append(objs, r.mouseDisplayContainer)
-	if r.widget.enableMousePointDisplay {
-		if r.mouseDisplayContainer.Objects[1].(*widget.Label).Text != "" {
-			if !r.mouseDisplayContainer.Visible() {
-				r.mouseDisplayContainer.Show()
-			}
-		} else {
-			r.mouseDisplayContainer.Hide()
-		}
-	} else {
-		r.mouseDisplayContainer.Hide()
-	}
+
 	r.widget.debugLog("lineChartRenderer::Objects() EXIT cnt: ", len(objs), ", Elapsed.microseconds: ", time.Until(startTime).Microseconds())
 	return objs
 }
@@ -952,8 +955,8 @@ func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 func (r *lineChartRenderer) Destroy() {
 	r.widget.debugLog("lineChartRenderer::Destroy() ENTER cnt: ", len(r.widget.objectsCache))
 	r.widget.objectsCache = r.widget.objectsCache[:0]
-	for key, slice := range r.widget.dataPoints {
-		slice = slice[:0]
+	for key := range r.widget.dataPoints {
+		r.widget.dataPoints[key] = r.widget.dataPoints[key][:0]
 		r.dataPoints[key] = r.dataPoints[key][:0]
 		r.dataPointMarkers[key] = r.dataPointMarkers[key][:0]
 	}
