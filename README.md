@@ -1,10 +1,10 @@
 # SknLineChart
-Line chart with 120 horizontal, xscale, divisions displayed. The Y scale is limited to 100 divisions.  Written in Go using the Fyne GUI framework.
+LineChart written to display periodic data samples on a line chart, with the ability to display the point value when hovered over with pointer.  There is an unlimited number of series which can be displayed. However, the current maximum number of points per series that can be shown on screen is 120 xpoints.  Accumulated point counts greater 120 simply roll off the end.    
 
 ![Display Example](sknlinechart.png)
 
 ## Features
-* Multiple Series of datapoints rendered as a single line
+* Multiple Series of data points rendered as a single line
 * Series should be the same color. Each point in this chart accepts a themed color name
 * 120 datapoint are displayed on the x scale of chart, with 100 as the default Y value.
 * More than 120 data points causes the earliest points to be rolled off the screen; each series is independently scrolls
@@ -17,12 +17,38 @@ Line chart with 120 horizontal, xscale, divisions displayed. The Y scale is limi
 * left and right middle labels can be used as scale descriptions
 * Any label left empty will not be displayed.
 * Horizontal and Vertical chart grid lines can also be turned off/on
+* There is a callback available which fires when a point if hovered over; passing the full datapoint and series name.
 
 ### SknLineChart Interface
 ```go
+// ChartDatapoint data container interface for LineChart
+type ChartDatapoint interface {
+Value() float32
+SetValue(y float32)
+
+ColorName() string
+SetColorName(n string)
+
+Timestamp() string
+SetTimestamp(t string)
+
+// ExternalID string uuid assigned when created
+ExternalID() string
+
+// Copy returns a cloned copy of current item
+Copy() ChartDatapoint
+
+// MarkerPosition internal use only: current data point marker location
+MarkerPosition() (*fyne.Position, *fyne.Position)
+
+// SetMarkerPosition internal use only: screen location of where data point marker is located
+SetMarkerPosition(top *fyne.Position, bottom *fyne.Position)
+}
+
 // LineChart feature list
 type LineChart interface {
 // Chart Attributes
+
 IsDataPointMarkersEnabled() bool // mouse button 2 toggles
 IsHorizGridLinesEnabled() bool
 IsVertGridLinesEnabled() bool
@@ -33,16 +59,16 @@ SetHorizGridLines(enable bool)
 SetVertGridLines(enable bool)
 SetMousePointDisplay(enable bool)
 
-// Info labels
-GetTopLeftLabel() string
-GetTitle() string
-GetTopRightLabel() string
-
 // Scale legend
+
 GetMiddleLeftLabel() string
 GetMiddleRightLabel() string
 
 // Info Labels
+
+GetTopLeftLabel() string
+GetTitle() string
+GetTopRightLabel() string
 GetBottomLeftLabel() string
 GetBottomCenteredLabel() string
 GetBottomRightLabel() string
@@ -58,20 +84,22 @@ SetBottomRightLabel(newValue string)
 
 // ApplyDataSeries add a whole data series at once
 // expect this will rarely be used, since loading more than 120 point will raise error
-ApplyDataSeries(seriesName string, newSeries []LineChartDatapoint) error
+ApplyDataSeries(seriesName string, newSeries []*ChartDatapoint) error
 
 // ApplyDataPoint primary method to add another data point to any series
 // If series has more than 120 points, point 0 will be rolled out making room for this one
-ApplyDataPoint(seriesName string, newDataPoint LineChartDatapoint)
+ApplyDataPoint(seriesName string, newDataPoint *ChartDatapoint)
 
-// SetMinSize sets the minimun widget size respond when asked
+// SetMinSize set the minimum size limit for the linechart
 SetMinSize(s fyne.Size)
 
 // EnableDebugLogging turns method entry/exit logging on or off
 EnableDebugLogging(enable bool)
 
-}
+// SetHoverPointCallback method to call when a onscreen datapoint is hovered over by pointer
+SetOnHoverPointCallback(func(dataPoint ChartDatapoint))
 
+}
 ```
 
 ## Fyne Custom Widget Strategy
@@ -87,7 +115,7 @@ EnableDebugLogging(enable bool)
  * 3. Define NewWidget() *ExportedStruct method, related interface should have different name.
  *    1. Define state variables for this widget
  *    2. Extend the BaseWidget
- *       1. If coding SetMinSize(fyne.Size), call resize on BaseWidget 
+ *       1. If coding SetMinSize(fyne.Size), use saved value in MinSize() in rendered 
  *    3. Define Widget required methods
  *       1. CreateRenderer() fyne.WidgetRenderer, call newRenderer() below
  *       2. Renderer has the other required methods, like Refresh(), etc.
@@ -114,7 +142,6 @@ EnableDebugLogging(enable bool)
  *
  * Critical Notes:
  * - if using maps, map[string]interface{}, they will require a mutex to prevent concurrency errors caused my concurrent read/writes.
- * - data binding creates a new var from source var and it is the new var that should be referenced, as it is synchronized to changes in bonded data var.
  */
 ```
 
@@ -229,7 +256,7 @@ func main() {
 	}(&w)
 
 	w.ShowAndRun()
-	time.Sleep(1 * time.Second)
+	
 }
 
 ```
@@ -240,8 +267,7 @@ func main() {
 ├── README.md
 ├── cmd
 │   └── sknlinechart
-│       ├── main.go
-│       └── main_test.go
+│       └── main.go
 ├── go.mod
 ├── go.sum
 ├── datapoint.go

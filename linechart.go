@@ -88,7 +88,7 @@ type LineChartSkn struct {
 	logger                  *log.Logger
 	// Private: Exposed for Testing; DO NOT USE
 	objectsCache         []fyne.CanvasObject
-	OnHoverPointCallback func(dataPoint ChartDatapoint)
+	OnHoverPointCallback func(series string, dataPoint ChartDatapoint)
 }
 
 var _ LineChart = (*LineChartSkn)(nil)
@@ -154,7 +154,7 @@ func (w *LineChartSkn) CreateRenderer() fyne.WidgetRenderer {
 	return r
 }
 
-func (w *LineChartSkn) SetOnHoverPointCallback(f func(dataPoint ChartDatapoint)) {
+func (w *LineChartSkn) SetOnHoverPointCallback(f func(series string, dataPoint ChartDatapoint)) {
 	w.OnHoverPointCallback = f
 }
 
@@ -376,7 +376,7 @@ found:
 					value := fmt.Sprint(key, ", Index: ", idx, ", Value: ", (*point).Value(), "    \n[", (*point).Timestamp(), "]")
 					w.enableMouseContainer(value, (*point).ColorName(), &me.Position)
 					if w.OnHoverPointCallback != nil {
-						w.OnHoverPointCallback((*point).Copy())
+						w.OnHoverPointCallback(strings.Clone(key), (*point).Copy())
 					}
 					matched = true
 					break found

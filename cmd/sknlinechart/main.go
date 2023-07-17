@@ -61,7 +61,7 @@ func main() {
 	systemSignalChannel := make(chan os.Signal, 1)
 	exitCode := 0
 	windowClosed := false
-
+	logger := log.New(os.Stdout, "[DEBUG] ", log.Lmicroseconds|log.Lshortfile)
 	gui := app.NewWithID("net.skoona.sknLineChart")
 	w := gui.NewWindow("Custom Widget Development")
 
@@ -82,7 +82,7 @@ func main() {
 		time.Sleep(10 * time.Second)
 		err = lineChart.ApplyDataSeries("AllAtOnce", many)
 		if err != nil {
-			fmt.Println("ApplyDataSeries", err.Error())
+			logger.Println("ApplyDataSeries", err.Error())
 		}
 		time.Sleep(time.Second)
 		for i := 0; i < 150; i++ {
@@ -98,8 +98,8 @@ func main() {
 		}
 	})(lineChart)
 
-	lineChart.SetOnHoverPointCallback(func(p lc.ChartDatapoint) {
-		log.Printf("Chart Datapoint Selected Callback: %v\n", p)
+	lineChart.SetOnHoverPointCallback(func(series string, p lc.ChartDatapoint) {
+		logger.Printf("Chart Datapoint Selected Callback: series:%s, point: %v\n", series, p)
 	})
 
 	w.SetContent(container.NewPadded(lineChart))
@@ -109,7 +109,7 @@ func main() {
 		signal.Notify(stopFlag, syscall.SIGINT, syscall.SIGTERM)
 		sig := <-stopFlag // wait on ctrl-c
 		windowClosed = true
-		fmt.Println("Signal Received: ", sig.String())
+		logger.Println("Signal Received: ", sig.String())
 		exitCode = 1
 		(*w).Close()
 	}(&w, systemSignalChannel)
