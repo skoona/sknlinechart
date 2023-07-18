@@ -560,17 +560,19 @@ func newLineChartRenderer(lineChart *LineChartSkn) fyne.WidgetRenderer {
 	// vertical text for X/Y legends since no text rotation is available
 	lBox := container.NewVBox()
 	for _, c := range lineChart.leftMiddleLabel {
-		lBox.Add(
-			canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground))),
-		)
+		t := canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground)))
+		t.TextStyle = fyne.TextStyle{Monospace: true}
+		t.Alignment = fyne.TextAlignCenter
+		lBox.Add(t)
 	}
 	objs = append(objs, lBox)
 
 	rBox := container.NewVBox()
 	for _, c := range lineChart.rightMiddleLabel {
-		rBox.Add(
-			canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground))),
-		)
+		t := canvas.NewText(strings.ToUpper(string(c)), theme.PrimaryColorNamed(string(theme.ColorNameForeground)))
+		t.TextStyle = fyne.TextStyle{Monospace: true}
+		t.Alignment = fyne.TextAlignCenter
+		rBox.Add(t)
 	}
 	objs = append(objs, rBox)
 
@@ -704,6 +706,8 @@ func (r *lineChartRenderer) Refresh() {
 			strings.ToUpper(string(c)),
 			theme.PrimaryColorNamed(string(theme.ColorNameForeground)))
 		z.TextSize = 14
+		z.TextStyle = fyne.TextStyle{Monospace: true}
+		z.Alignment = fyne.TextAlignCenter
 		r.leftMiddleBox.Add(z)
 	}
 	r.leftMiddleBox.Refresh()
@@ -714,6 +718,9 @@ func (r *lineChartRenderer) Refresh() {
 			strings.ToUpper(string(c)),
 			theme.PrimaryColorNamed(string(theme.ColorNameForeground)))
 		z.TextSize = 14
+		z.TextStyle = fyne.TextStyle{Monospace: true}
+		z.Alignment = fyne.TextAlignCenter
+
 		r.rightMiddleBox.Add(z)
 	}
 	r.rightMiddleBox.Refresh()
