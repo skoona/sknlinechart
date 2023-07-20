@@ -22,7 +22,7 @@ var _ = Describe("Maps and slices utilities", func() {
 			} else if val < 30.0 {
 				val = 30.0
 			}
-			point := sknlinechart.NewChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC3339))
+			point := sknlinechart.NewChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC1123))
 			dataPoints = append(dataPoints, &point)
 		}
 	})
@@ -32,7 +32,7 @@ var _ = Describe("Maps and slices utilities", func() {
 		var originalCount int
 
 		BeforeEach(func() {
-			newOne = sknlinechart.NewChartDatapoint(960.13, "TEST", time.Now().Format(time.RFC3339))
+			newOne = sknlinechart.NewChartDatapoint(960.13, "TEST", time.Now().Format(time.RFC1123))
 			first = *dataPoints[0]
 			last = *dataPoints[(len(dataPoints) - 1)]
 			originalCount = len(dataPoints)

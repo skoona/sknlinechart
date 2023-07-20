@@ -12,11 +12,11 @@ import (
 
 var _ = Describe("Datapoint Operations", func() {
 	It("should return a valid datapoint object", func() {
-		point := sknlinechart.NewChartDatapoint(62.3, theme.ColorYellow, time.Now().Format(time.RFC3339))
+		point := sknlinechart.NewChartDatapoint(62.3, theme.ColorYellow, time.Now().Format(time.RFC1123))
 		Expect(reflect.TypeOf(point).String()).To(Equal("*sknlinechart.chartDatapoint"))
 	})
 	It("properties should respond as expected", func() {
-		point := sknlinechart.NewChartDatapoint(62.4, theme.ColorYellow, time.Now().Format(time.RFC3339))
+		point := sknlinechart.NewChartDatapoint(62.4, theme.ColorYellow, time.Now().Format(time.RFC1123))
 
 		By("should initialize the marker positions to empty")
 		a, b := point.MarkerPosition()
@@ -36,7 +36,7 @@ var _ = Describe("Datapoint Operations", func() {
 
 		By("should be able to change string values")
 		point.SetColorName(theme.ColorBlue)
-		value := time.Now().Format(time.RFC3339)
+		value := time.Now().Format(time.RFC1123)
 		point.SetTimestamp(value)
 		Expect(point.ColorName()).To(Equal(theme.ColorBlue))
 		Expect(point.Timestamp()).To(Equal(value))

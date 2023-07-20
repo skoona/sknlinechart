@@ -97,7 +97,7 @@ func makeUI(title, footer string, points int) (sknlinechart.LineChart, error) {
 			} else if val < 30.0 {
 				val = 30.0
 			}
-			point := sknlinechart.NewChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC3339))
+			point := sknlinechart.NewChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC1123))
 			dataPoints["Testing"] = append(dataPoints["Testing"], &point)
 		}
 	}

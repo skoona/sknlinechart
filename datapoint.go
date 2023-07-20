@@ -20,8 +20,8 @@ func NewChartDatapoint(value float32, colorName, timestamp string) ChartDatapoin
 		value:                value,
 		colorName:            colorName,
 		timestamp:            timestamp,
-		markerTopPosition:    &fyne.Position{0, 0},
-		markerBottomPosition: &fyne.Position{0, 0},
+		markerTopPosition:    &fyne.Position{X: 0, Y: 0},
+		markerBottomPosition: &fyne.Position{X: 0, Y: 0},
 		externalID:           uuid.New().String(),
 	}
 }
@@ -31,8 +31,8 @@ func (d *chartDatapoint) Copy() ChartDatapoint {
 		colorName:            strings.Clone(d.colorName),
 		timestamp:            strings.Clone(d.timestamp),
 		externalID:           strings.Clone(d.externalID),
-		markerTopPosition:    &fyne.Position{0, 0},
-		markerBottomPosition: &fyne.Position{0, 0},
+		markerTopPosition:    &fyne.Position{X: 0, Y: 0},
+		markerBottomPosition: &fyne.Position{X: 0, Y: 0},
 	}
 }
 func (d *chartDatapoint) Value() float32 {

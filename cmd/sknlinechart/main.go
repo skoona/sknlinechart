@@ -26,7 +26,7 @@ func makeChart(title, footer string) (lc.LineChart, error) {
 		} else if val < 30.0 {
 			val = 30.0
 		}
-		point := lc.NewChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC3339))
+		point := lc.NewChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC1123))
 		dataPoints["Humidity"] = append(dataPoints["Humidity"], &point)
 	}
 	for x := 1; x < 130; x++ {
@@ -36,7 +36,7 @@ func makeChart(title, footer string) (lc.LineChart, error) {
 		} else if val < 55.0 {
 			val = 55.0
 		}
-		point := lc.NewChartDatapoint(val, theme.ColorRed, time.Now().Format(time.RFC3339))
+		point := lc.NewChartDatapoint(val, theme.ColorRed, time.Now().Format(time.RFC1123))
 		dataPoints["Temperature"] = append(dataPoints["Temperature"], &point)
 	}
 
@@ -76,7 +76,7 @@ func main() {
 			} else if val < 5.0 {
 				val = 5.0
 			}
-			point := lc.NewChartDatapoint(val, theme.ColorPurple, time.Now().Format(time.RFC3339))
+			point := lc.NewChartDatapoint(val, theme.ColorPurple, time.Now().Format(time.RFC1123))
 			many = append(many, &point)
 		}
 		time.Sleep(10 * time.Second)
@@ -89,7 +89,7 @@ func main() {
 			if windowClosed {
 				break
 			}
-			point := lc.NewChartDatapoint(rand.Float32()*110.0, theme.ColorYellow, time.Now().Format(time.RFC3339))
+			point := lc.NewChartDatapoint(rand.Float32()*110.0, theme.ColorYellow, time.Now().Format(time.RFC1123))
 			chart.ApplyDataPoint("SteadyStream", &point)
 			if windowClosed {
 				break

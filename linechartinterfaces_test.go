@@ -12,7 +12,7 @@ import (
 var _ = Describe("Linechartinterfaces", func() {
 
 	It("Ensure Interfaces are implemented", func() {
-		point := sknlinechart.NewChartDatapoint(62.4, theme.ColorYellow, time.Now().Format(time.RFC3339))
+		point := sknlinechart.NewChartDatapoint(62.4, theme.ColorYellow, time.Now().Format(time.RFC1123))
 		dIntf := reflect.TypeOf((*sknlinechart.ChartDatapoint)(nil)).Elem()
 
 		var dataPoints map[string][]*sknlinechart.ChartDatapoint
