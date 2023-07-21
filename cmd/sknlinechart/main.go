@@ -19,7 +19,7 @@ func makeChart(title, footer string) (lc.LineChart, error) {
 	dataPoints := map[string][]*lc.ChartDatapoint{} // legend, points
 
 	rand.NewSource(1000.0)
-	for x := 1; x < 150; x++ {
+	for x := 1; x < 151; x++ {
 		val := rand.Float32() * 75.0
 		if val > 75.0 {
 			val = 75.0
@@ -29,7 +29,7 @@ func makeChart(title, footer string) (lc.LineChart, error) {
 		point := lc.NewChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC1123))
 		dataPoints["Humidity"] = append(dataPoints["Humidity"], &point)
 	}
-	for x := 1; x < 150; x++ {
+	for x := 1; x < 151; x++ {
 		val := rand.Float32() * 75.0
 		if val > 95.0 {
 			val = 95.0
@@ -72,7 +72,7 @@ func main() {
 
 	go (func(chart lc.LineChart) {
 		var many []*lc.ChartDatapoint
-		for x := 1; x < 121; x++ {
+		for x := 1; x < 161; x++ {
 			val := rand.Float32() * 25.0
 			if val > 50.0 {
 				val = 50.0
