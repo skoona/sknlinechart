@@ -64,11 +64,11 @@ type LineChart interface {
 	SetBottomRightLabel(newValue string)
 
 	// ApplyDataSeries add a whole data series at once
-	// expect this will rarely be used, since loading more than 120 point will raise error
+	// expect this will rarely be used, since loading more than 130 point will raise error
 	ApplyDataSeries(seriesName string, newSeries []*ChartDatapoint) error
 
 	// ApplyDataPoint primary method to add another data point to any series
-	// If series has more than 120 points, point 0 will be rolled out making room for this one
+	// If series has more than 130 points, point 0 will be rolled out making room for this one
 	ApplyDataPoint(seriesName string, newDataPoint *ChartDatapoint)
 
 	// SetMinSize set the minimum size limit for the linechart

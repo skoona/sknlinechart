@@ -1,15 +1,15 @@
 # SknLineChart
-LineChart written to display periodic data samples on a line chart, with the ability to display the point value when hovered over with pointer.  There is an unlimited number of series which can be displayed. However, the current maximum number of points per series that can be shown on screen is 120 xpoints.  Accumulated point counts greater 120 simply roll off the end.    
+LineChart written to display periodic data samples on a line chart, with the ability to display the point value when hovered over with pointer.  There is an unlimited number of series which can be displayed. However, the current maximum number of points per series that can be shown on screen is 130 xpoints.  Accumulated point counts greater 130 simply roll off the end.    
 
 ![Display Example](sknlinechart.png)
 
 ## Features
 * Multiple Series of data points rendered as a single line
 * Series should be the same color. Each point in this chart accepts a themed color name
-* 120 datapoint are displayed on the x scale of chart, with 100 as the default Y value.
-* More than 120 data points causes the earliest points to be rolled off the screen; each series is independently scrolls
+* 130 datapoint are displayed on the x scale of chart, with 100 as the default Y value.
+* More than 130 data points causes the earliest points to be rolled off the screen; each series is independently scrolls
 * Data points can be added at any time, causing the series to possible scroll automatically
-* The 120 x limit will throw and error on creation of the chart, or on the replacement of its active dataset.
+* The 130 x limit will throw and error on creation of the chart, or on the replacement of its active dataset.
 * Data point markers are toggled with mouse button 2
 * Hovering over a data point will show a popup near the mouse pointer, showing series, value, index, and timestamp of data under mouse
 * Mouse button 1 will toggle the sticky datapoint popup
@@ -83,11 +83,11 @@ SetBottomCenteredLabel(newValue string)
 SetBottomRightLabel(newValue string)
 
 // ApplyDataSeries add a whole data series at once
-// expect this will rarely be used, since loading more than 120 point will raise error
+// expect this will rarely be used, since loading more than 130 point will raise error
 ApplyDataSeries(seriesName string, newSeries []*ChartDatapoint) error
 
 // ApplyDataPoint primary method to add another data point to any series
-// If series has more than 120 points, point 0 will be rolled out making room for this one
+// If series has more than 130 points, point 0 will be rolled out making room for this one
 ApplyDataPoint(seriesName string, newDataPoint *ChartDatapoint)
 
 // SetMinSize set the minimum size limit for the linechart

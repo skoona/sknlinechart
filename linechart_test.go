@@ -19,12 +19,12 @@ var _ = Describe("verify line chart initial state", func() {
 		Expect(reflect.TypeOf(lc).String()).To(Equal("*sknlinechart.LineChartSkn"))
 	})
 	It("should accept maximum number of points on create", func() {
-		lc, err := makeUI("Testing", "Through Widget", 120)
+		lc, err := makeUI("Testing", "Through Widget", 150)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(reflect.TypeOf(lc).String()).To(Equal("*sknlinechart.LineChartSkn"))
 	})
 	It("should accept overflow number of points on create", func() {
-		lc, err := makeUI("Testing", "Through Widget", 130)
+		lc, err := makeUI("Testing", "Through Widget", 160)
 		Expect(err).To(HaveOccurred())
 		Expect(reflect.TypeOf(lc).String()).To(Equal("*sknlinechart.LineChartSkn"))
 	})
@@ -32,7 +32,7 @@ var _ = Describe("verify line chart initial state", func() {
 		lc, _ := makeUI("Testing", "Through Widget", 2)
 		lc.Refresh()
 		actual := lc.ObjectCount()
-		Expect(actual).To(Equal(56))
+		Expect(actual).To(Equal(66))
 	})
 	It("should support a usable minimum size", func() {
 		lc, _ := makeUI("Testing", "Through Widget", 2)
