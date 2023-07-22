@@ -88,7 +88,7 @@ func main() {
 			logger.Println("ApplyDataSeries", err.Error())
 		}
 		time.Sleep(time.Second)
-		for i := 0; i < 150; i++ {
+		for i := 0; i < 151; i++ {
 			if windowClosed {
 				break
 			}

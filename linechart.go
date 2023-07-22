@@ -69,6 +69,7 @@ type LineChartSkn struct {
 	enableHorizGridLines    bool
 	enableVertGridLines     bool
 	enableMousePointDisplay bool
+	enableColorLegend       bool
 	topLeftLabel            string // The text to display in the widget
 	topCenteredLabel        string
 	topRightLabel           string
@@ -96,10 +97,10 @@ var _ fyne.Widget = (*LineChartSkn)(nil)
 var _ fyne.CanvasObject = (*LineChartSkn)(nil)
 
 // NewLineChart Create the Line Chart
-// be careful not to exceed the series data point limit, which defaults to 130
+// be careful not to exceed the series data point limit, which defaults to 150
 //
 // can return a valid chart object and an error object; errors really should be handled
-// and are caused by data points exceeding the container limit of 130; they will be truncated
+// and are caused by data points exceeding the container limit of 150; they will be truncated
 func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]*ChartDatapoint) (LineChart, error) {
 	if dataPoints == nil {
 		return nil, errors.New("dataPoint Params cannot be nil")
@@ -123,11 +124,12 @@ func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]*ChartD
 		dataPoints:              *dataPoints,
 		datapointOrSeriesAdded:  true,
 		dataPointXLimit:         dpl,
-		dataPointScale:          fyne.NewSize(float32(dpl), 130.0),
+		dataPointScale:          fyne.NewSize(float32(dpl), 130.0), // max x/y scales, and x data points
 		enableDataPointMarkers:  true,
 		enableHorizGridLines:    true,
 		enableVertGridLines:     true,
 		enableMousePointDisplay: true,
+		enableColorLegend:       true,
 		mouseDisplayStr:         "",
 		mouseDisplayPosition:    &fyne.Position{},
 		mouseDisplayFrameColor:  string(theme.ColorNameForeground),
@@ -190,6 +192,11 @@ func (w *LineChartSkn) IsHorizGridLinesEnabled() bool {
 // IsVertGridLinesEnabled returns state of chart's display of vertical grid line
 func (w *LineChartSkn) IsVertGridLinesEnabled() bool {
 	return w.enableVertGridLines
+}
+
+// IsColorLegendEnabled returns state of color legend at bottom right of chart
+func (w *LineChartSkn) IsColorLegendEnabled() bool {
+	return w.enableColorLegend
 }
 
 // IsMousePointDisplayEnabled return state of mouse popups when hovered over a chart datapoint
@@ -275,6 +282,11 @@ func (w *LineChartSkn) SetDataPointMarkers(enable bool) {
 // SetHorizGridLines enables chart horizontal grid lines
 func (w *LineChartSkn) SetHorizGridLines(enable bool) {
 	w.enableHorizGridLines = enable
+}
+
+// SetColorLegend enables the color legend at bottom right on chart
+func (w *LineChartSkn) SetColorLegend(enable bool) {
+	w.enableColorLegend = enable
 }
 
 // SetVertGridLines enables chart vertical grid lines
@@ -464,6 +476,7 @@ type lineChartRenderer struct {
 	bottomRightDesc       *canvas.Text
 	leftMiddleBox         *fyne.Container
 	rightMiddleBox        *fyne.Container
+	colorLegend           *fyne.Container
 }
 
 var _ fyne.WidgetRenderer = (*lineChartRenderer)(nil)
@@ -537,6 +550,7 @@ func newLineChartRenderer(lineChart *LineChartSkn) fyne.WidgetRenderer {
 		objs = append(objs, xl)
 	}
 
+	colorLegend := container.NewHBox()
 	for key, points := range lineChart.dataPoints {
 		for _, point := range points {
 			x := canvas.NewLine(theme.PrimaryColorNamed((*point).ColorName()))
@@ -547,6 +561,8 @@ func newLineChartRenderer(lineChart *LineChartSkn) fyne.WidgetRenderer {
 			z.Resize(fyne.NewSize(5, 5))
 			dpMaker[key] = append(dpMaker[key], z)
 		}
+		z := canvas.NewText(key, theme.PrimaryColorNamed((*points[0]).ColorName()))
+		colorLegend.Add(z)
 	}
 
 	topCenteredDesc := canvas.NewText(lineChart.topCenteredLabel, theme.ForegroundColor())
@@ -615,6 +631,7 @@ func newLineChartRenderer(lineChart *LineChartSkn) fyne.WidgetRenderer {
 		rightMiddleBox:        rBox,
 		dataPointMarkers:      dpMaker,
 		mouseDisplayContainer: mouseDisplay,
+		colorLegend:           colorLegend,
 	}
 }
 
@@ -677,6 +694,15 @@ func (r *lineChartRenderer) manageLabelVisibility() {
 		}
 	} else {
 		r.bottomRightDesc.Hide()
+	}
+	if r.widget.enableColorLegend {
+		if r.colorLegend.Hidden {
+			r.colorLegend.Show()
+		}
+	} else {
+		if !r.colorLegend.Hidden {
+			r.colorLegend.Hide()
+		}
 	}
 
 	for _, line := range r.xLines {
@@ -822,8 +848,20 @@ func (r *lineChartRenderer) layoutSeries(series string) {
 		} else {
 			dpm.Hide()
 		}
-
 	}
+	var found bool
+correct:
+	for _, o := range r.colorLegend.Objects {
+		if o.(*canvas.Text).Text == series {
+			found = true
+			break correct
+		}
+	}
+	if !found {
+		z := canvas.NewText(series, theme.PrimaryColorNamed((*data[0]).ColorName()))
+		r.colorLegend.Add(z)
+	}
+
 	r.widget.debugLog("lineChartRenderer::layoutSeries() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
 }
 
@@ -836,8 +874,8 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 	r.widget.propertiesLock.Lock()
 	defer r.widget.propertiesLock.Unlock()
 
-	r.xInc = (s.Width - theme.Padding()) / 16.0
-	r.yInc = (s.Height - theme.Padding()) / 16.0
+	r.xInc = (s.Width - (theme.Padding() * 4)) / 16.0
+	r.yInc = (s.Height - (theme.Padding() * 3)) / 16.0
 
 	r.xInc = float32(math.Trunc(float64(r.xInc)))
 	r.yInc = float32(math.Trunc(float64(r.yInc)))
@@ -929,6 +967,9 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 	r.bottomRightDesc.Move(fyne.NewPos((s.Width-ts.Width)-theme.Padding(), s.Height-ts.Height-theme.Padding()))
 	r.bottomLeftDesc.Move(fyne.NewPos(theme.Padding()+2.0, s.Height-ts.Height-theme.Padding()))
 
+	z := r.colorLegend.MinSize()
+	r.colorLegend.Move(fyne.NewPos(s.Width-(z.Width+theme.Padding()), (r.yInc*15)+theme.Padding()))
+
 	r.widget.debugLog("lineChartRenderer::Layout() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
 }
 
@@ -962,7 +1003,7 @@ func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 		}
 	}
 
-	objs = append(objs, r.mouseDisplayContainer)
+	objs = append(objs, r.colorLegend, r.mouseDisplayContainer)
 
 	r.widget.debugLog("lineChartRenderer::Objects() EXIT cnt: ", len(objs), ", Elapsed.microseconds: ", time.Until(startTime).Microseconds())
 	return objs

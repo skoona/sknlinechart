@@ -33,11 +33,13 @@ type LineChart interface {
 	IsDataPointMarkersEnabled() bool // mouse button 2 toggles
 	IsHorizGridLinesEnabled() bool
 	IsVertGridLinesEnabled() bool
+	IsColorLegendEnabled() bool
 	IsMousePointDisplayEnabled() bool // hoverable and mouse button one
 
 	SetDataPointMarkers(enable bool)
 	SetHorizGridLines(enable bool)
 	SetVertGridLines(enable bool)
+	SetColorLegend(enable bool)
 	SetMousePointDisplay(enable bool)
 
 	// Scale legend
