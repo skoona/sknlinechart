@@ -2,6 +2,15 @@ package sknlinechart
 
 import "fyne.io/fyne/v2"
 
+// GraphPointSmoothing support for different implementation
+// of averaging or smooth data; current provides rolling average from last x reading.
+type GraphPointSmoothing interface {
+	AddValue(value float64) float64
+	SeriesName() string
+	IsNil() bool
+	String() string
+}
+
 // ChartDatapoint data container interface for LineChart
 type ChartDatapoint interface {
 	Value() float32

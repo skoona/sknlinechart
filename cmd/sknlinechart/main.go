@@ -88,12 +88,19 @@ func main() {
 			logger.Println("ApplyDataSeries", err.Error())
 		}
 		time.Sleep(time.Second)
+
+		smoothed := lc.NewGraphAverage("SmoothStream", 32)
 		for i := 0; i < 151; i++ {
 			if windowClosed {
 				break
 			}
-			point := lc.NewChartDatapoint(rand.Float32()*110.0, theme.ColorYellow, time.Now().Format(time.RFC1123))
-			chart.ApplyDataPoint("SteadyStream", &point)
+			dVal := float64(rand.Float32() * 110.0)
+			smoother := smoothed.AddValue(dVal)
+			point := lc.NewChartDatapoint(float32(smoother), theme.ColorYellow, time.Now().Format(time.RFC1123))
+			chart.ApplyDataPoint("SmoothStream", &point)
+
+			point2 := lc.NewChartDatapoint(float32(dVal), theme.ColorPurple, time.Now().Format(time.RFC1123))
+			chart.ApplyDataPoint("SteadyStream", &point2)
 			if windowClosed {
 				break
 			}
