@@ -30,9 +30,10 @@ func NewGraphAverage(seriesName string, graphPeriod time.Duration) *GraphAverage
 func (g *GraphAverage) AddValue(value float64) float64 {
 	if g.size >= g.graphPeriod {
 		g.dataPoints = ShiftSlice(value, g.dataPoints)
+	} else {
+		g.dataPoints = append(g.dataPoints, value)
 	}
 
-	g.dataPoints = append(g.dataPoints, value)
 	g.size = time.Duration(len(g.dataPoints))
 
 	return g.computeAverage()
