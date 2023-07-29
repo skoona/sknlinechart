@@ -4,6 +4,8 @@ LineChart written to display periodic data samples on a line chart, with the abi
 ![Display Example](sknlinechart.png)
 
 ## Features
+* Added yScaleFactor param to NewLineChart() which control the max yScale value and Labels
+* - 14 divisions on yScale including 0.  So 50 * 13 would give 650 and the max yValue on scale.
 * Multiple Series of data points rendered as a individual line
 * Series should be the same color. Each point in this chart accepts a themed color name
 * 150 datapoint are displayed on the x scale of chart, with 100 as the default Y value.
