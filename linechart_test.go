@@ -32,7 +32,7 @@ var _ = Describe("verify line chart initial state", func() {
 		lc, _ := makeUI("Testing", "Through Widget", 2)
 		lc.Refresh()
 		actual := lc.ObjectCount()
-		Expect(actual).To(Equal(66))
+		Expect(actual).To(Equal(68))
 	})
 	It("should support a usable minimum size", func() {
 		lc, _ := makeUI("Testing", "Through Widget", 2)
@@ -101,7 +101,7 @@ func makeUI(title, footer string, points int) (sknlinechart.LineChart, error) {
 			dataPoints["Testing"] = append(dataPoints["Testing"], &point)
 		}
 	}
-	lineChart, err := sknlinechart.NewLineChart(title, footer, &dataPoints)
+	lineChart, err := sknlinechart.NewLineChart(title, footer, 10, &dataPoints)
 	lineChart.EnableDebugLogging(false)
 
 	return lineChart, err

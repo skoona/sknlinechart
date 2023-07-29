@@ -39,6 +39,9 @@ type ChartDatapoint interface {
 type LineChart interface {
 	// Chart Attributes
 
+	GetLineStrokeSize() float32
+	SetLineStrokeSize(newSize float32)
+
 	IsDataPointMarkersEnabled() bool // mouse button 2 toggles
 	IsHorizGridLinesEnabled() bool
 	IsVertGridLinesEnabled() bool

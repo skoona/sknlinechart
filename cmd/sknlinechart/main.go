@@ -40,16 +40,19 @@ func makeChart(title, footer string) (lc.LineChart, error) {
 		dataPoints["Temperature"] = append(dataPoints["Temperature"], &point)
 	}
 
-	lineChart, err := lc.NewLineChart(title, footer, &dataPoints)
+	// yScalefactor is represents the topmost value on the yScale divided by 13
+	// Ex: 650y = 650/13=50, also 130y is 130/13=10
+	// 13 because there are 13 vertical divisions not including zero
+	lineChart, err := lc.NewLineChart(title, footer, 55, &dataPoints)
 	if err != nil {
 		fmt.Println(err.Error())
 		if lineChart == nil {
 			panic(err.Error())
 		}
 	}
+	lineChart.SetLineStrokeSize(2.0)
 	lineChart.EnableDebugLogging(true)
 	lineChart.SetTopLeftLabel("top left")
-	//lineChart.SetTopRightLabel("top right")
 
 	lineChart.SetMiddleLeftLabel("Temperature")
 	lineChart.SetMiddleRightLabel("Humidity")
@@ -65,6 +68,7 @@ func main() {
 	exitCode := 0
 	windowClosed := false
 	logger := log.New(os.Stdout, "[DEBUG] ", log.Lmicroseconds|log.Lshortfile)
+
 	gui := app.NewWithID("net.skoona.sknLineChart")
 	w := gui.NewWindow("Custom Widget Development")
 
@@ -90,11 +94,11 @@ func main() {
 		time.Sleep(time.Second)
 
 		smoothed := lc.NewGraphAverage("SmoothStream", 32)
-		for i := 0; i < 151; i++ {
+		for i := 0; i < 200; i++ {
 			if windowClosed {
 				break
 			}
-			dVal := float64(rand.Float32() * 110.0)
+			dVal := float64(rand.Float32() * 512.0)
 			smoother := smoothed.AddValue(dVal)
 			point := lc.NewChartDatapoint(float32(smoother), theme.ColorYellow, time.Now().Format(time.RFC1123))
 			chart.ApplyDataPoint("SmoothStream", &point)
@@ -114,6 +118,7 @@ func main() {
 
 	w.SetContent(container.NewPadded(lineChart))
 	w.Resize(fyne.NewSize(982, 452))
+	w.CenterOnScreen()
 
 	go func(w *fyne.Window, stopFlag chan os.Signal) {
 		signal.Notify(stopFlag, syscall.SIGINT, syscall.SIGTERM)

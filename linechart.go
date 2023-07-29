@@ -53,7 +53,6 @@ import (
 
 import (
 	"fyne.io/fyne/v2/container"
-	"image/color"
 	"strconv"
 	"strings"
 )
@@ -64,7 +63,10 @@ import (
 type LineChartSkn struct {
 	widget.BaseWidget       // Inherit from BaseWidget
 	datapointOrSeriesAdded  bool
+	dataPointStrokeSize     float32
 	dataPointXLimit         int
+	dataPointYLimit         float32
+	chartScaleMultiplier    int
 	enableDataPointMarkers  bool
 	enableHorizGridLines    bool
 	enableVertGridLines     bool
@@ -82,7 +84,6 @@ type LineChartSkn struct {
 	mouseDisplayPosition    *fyne.Position
 	mouseDisplayFrameColor  string
 	dataPoints              map[string][]*ChartDatapoint
-	dataPointScale          fyne.Size
 	minSize                 fyne.Size
 	propertiesLock          sync.RWMutex
 	debugLoggingEnabled     bool
@@ -101,12 +102,12 @@ var _ fyne.CanvasObject = (*LineChartSkn)(nil)
 //
 // can return a valid chart object and an error object; errors really should be handled
 // and are caused by data points exceeding the container limit of 150; they will be truncated
-func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]*ChartDatapoint) (LineChart, error) {
+func NewLineChart(topTitle, bottomTitle string, yScaleFactor int, dataPoints *map[string][]*ChartDatapoint) (LineChart, error) {
 	if dataPoints == nil {
 		return nil, errors.New("dataPoint Params cannot be nil")
 	}
 	err := errors.New("")
-	dpl := 150
+	dpl := 150 // max xScale
 	for key, points := range *dataPoints {
 		cnt := len(points)
 		if cnt > dpl {
@@ -122,9 +123,11 @@ func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]*ChartD
 	}
 	w := &LineChartSkn{ // Create this widget with an initial text value
 		dataPoints:              *dataPoints,
+		dataPointStrokeSize:     2.0,
 		datapointOrSeriesAdded:  true,
 		dataPointXLimit:         dpl,
-		dataPointScale:          fyne.NewSize(float32(dpl), 130.0), // max x/y scales, and x data points
+		dataPointYLimit:         float32(yScaleFactor * 13),
+		chartScaleMultiplier:    yScaleFactor,
 		enableDataPointMarkers:  true,
 		enableHorizGridLines:    true,
 		enableVertGridLines:     true,
@@ -141,7 +144,7 @@ func NewLineChart(topTitle, bottomTitle string, dataPoints *map[string][]*ChartD
 		bottomLeftLabel:         "",
 		bottomCenteredLabel:     bottomTitle,
 		bottomRightLabel:        "",
-		minSize:                 fyne.NewSize(420+theme.Padding()*4, 315+theme.Padding()*4),
+		minSize:                 fyne.NewSize(320+theme.Padding()*4, 240+theme.Padding()*4),
 		objectsCache:            []fyne.CanvasObject{}, // everything except datapoints, markers, and mousebox
 		propertiesLock:          sync.RWMutex{},
 		logger:                  log.New(os.Stdout, "[DEBUG] ", log.Lmicroseconds|log.Lshortfile),
@@ -204,6 +207,11 @@ func (w *LineChartSkn) IsMousePointDisplayEnabled() bool {
 	return w.enableMousePointDisplay
 }
 
+// GetLineStrokeSize sets thickness of all lines drawn
+func (w *LineChartSkn) GetLineStrokeSize() float32 {
+	return w.dataPointStrokeSize
+}
+
 // GetTopRightLabel returns text of top right label
 func (w *LineChartSkn) GetTopRightLabel() string {
 	return w.topRightLabel
@@ -232,6 +240,11 @@ func (w *LineChartSkn) GetBottomCenteredLabel() string {
 // GetBottomRightLabel returns text of bottom right label
 func (w *LineChartSkn) GetBottomRightLabel() string {
 	return w.bottomRightLabel
+}
+
+// SetLineStrokeSize sets thickness of all lines drawn
+func (w *LineChartSkn) SetLineStrokeSize(newSize float32) {
+	w.dataPointStrokeSize = newSize
 }
 
 // SetTopLeftLabel sets text to be display on chart at top left
@@ -457,8 +470,7 @@ func (w *LineChartSkn) debugLog(a ...any) {
 
 // Widget Renderer code starts here
 type lineChartRenderer struct {
-	widget                *LineChartSkn     // Reference to the widget holding the current state
-	chartFrame            *canvas.Rectangle // A chartFrame rectangle
+	widget                *LineChartSkn // Reference to the widget holding the current state
 	xInc                  float32
 	yInc                  float32
 	dataPoints            map[string][]*canvas.Line
@@ -499,15 +511,12 @@ func newLineChartRenderer(lineChart *LineChartSkn) fyne.WidgetRenderer {
 		xLabels, yLabels []*canvas.Text
 	)
 
-	background := canvas.NewRectangle(color.Transparent)
-	background.StrokeWidth = 0.75
-	background.StrokeColor = theme.PrimaryColorNamed(theme.ColorBlue)
-	objs = append(objs, background)
-
+	// hover frame
 	border := canvas.NewRectangle(theme.OverlayBackgroundColor())
 	border.StrokeColor = theme.PrimaryColorNamed(lineChart.mouseDisplayFrameColor)
 	border.StrokeWidth = 2.0
 
+	// hover content
 	legend := widget.NewLabel("")
 	legend.Alignment = fyne.TextAlignCenter
 	legend.Wrapping = fyne.TextWrapWord
@@ -521,27 +530,29 @@ func newLineChartRenderer(lineChart *LineChartSkn) fyne.WidgetRenderer {
 	)
 	mouseDisplay.Hide()
 
-	for i := 0; i < 13; i++ {
+	// x & y frame lines
+	for i := 0; i < 16; i++ { // vertical
 		x := canvas.NewLine(theme.PrimaryColorNamed(theme.ColorGreen))
 		x.StrokeWidth = 0.25
+		xlines = append(xlines, x)
+		objs = append(objs, x)
+	}
+	for i := 0; i < 14; i++ { // horiz line
 		y := canvas.NewLine(theme.PrimaryColorNamed(theme.ColorGreen))
 		y.StrokeWidth = 0.25
-		xlines = append(xlines, x)
 		ylines = append(ylines, y)
-		objs = append(objs, x, y)
+		objs = append(objs, y)
 	}
-	x := canvas.NewLine(theme.PrimaryColorNamed(theme.ColorGreen))
-	x.StrokeWidth = 0.25
-	xlines = append(xlines, x)
-	objs = append(objs, x)
 
+	// Y scale labels
 	for i := 0; i < 14; i++ {
-		yt := strconv.Itoa((13 - i) * 10)
+		yt := strconv.Itoa((13 - i) * lineChart.chartScaleMultiplier)
 		yl := canvas.NewText(yt, theme.ForegroundColor())
 		yl.Alignment = fyne.TextAlignTrailing
 		yLabels = append(yLabels, yl)
 		objs = append(objs, yl)
 	}
+	// X scale labels
 	for i := 0; i < 16; i++ {
 		xt := strconv.Itoa(i * 10)
 		xl := canvas.NewText(xt, theme.ForegroundColor())
@@ -550,15 +561,18 @@ func newLineChartRenderer(lineChart *LineChartSkn) fyne.WidgetRenderer {
 		objs = append(objs, xl)
 	}
 
+	// series legend on bottom right
 	colorLegend := container.NewHBox()
+	strokeSize := lineChart.dataPointStrokeSize
+	markerSize := strokeSize * 5
 	for key, points := range lineChart.dataPoints {
 		for _, point := range points {
 			x := canvas.NewLine(theme.PrimaryColorNamed((*point).ColorName()))
-			x.StrokeWidth = 2.0
+			x.StrokeWidth = strokeSize
 			dataPoints[key] = append(dataPoints[key], x)
 			z := canvas.NewCircle(theme.PrimaryColorNamed((*point).ColorName()))
-			z.StrokeWidth = 4.0
-			z.Resize(fyne.NewSize(5, 5))
+			z.StrokeWidth = strokeSize * 2
+			z.Resize(fyne.NewSize(markerSize, markerSize))
 			dpMaker[key] = append(dpMaker[key], z)
 		}
 		z := canvas.NewText(key, theme.PrimaryColorNamed((*points[0]).ColorName()))
@@ -615,7 +629,6 @@ func newLineChartRenderer(lineChart *LineChartSkn) fyne.WidgetRenderer {
 
 	return &lineChartRenderer{
 		widget:                lineChart,
-		chartFrame:            background,
 		xLines:                xlines,
 		yLines:                ylines,
 		xLabels:               xLabels,
@@ -804,16 +817,16 @@ func (r *lineChartRenderer) layoutSeries(series string) {
 	r.widget.debugLog("lineChartRenderer::layoutSeries() ENTER. Series: ", series)
 	// data points
 	xp := r.xInc
-	yp := r.yInc * 14
-	yScale := (r.yInc * 10) / 100
+	yp := r.yInc * 14.0
+	yScale := (r.yInc * 10) / (10.0 * float32(r.widget.chartScaleMultiplier)) // 100
 	xScale := (r.xInc * 10) / 100
 	var dp float32
 	data := r.widget.dataPoints[series] // datasource
 	lastPoint := fyne.NewPos(xp, yp)
 
 	for idx, point := range data { // one set of lines
-		if (*point).Value() > r.widget.dataPointScale.Height {
-			dp = r.widget.dataPointScale.Height
+		if (*point).Value() > r.widget.dataPointYLimit { // max y chart scale
+			dp = r.widget.dataPointYLimit
 		} else if (*point).Value() < 0.0 {
 			dp = 0.0
 		} else {
@@ -883,7 +896,7 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 	// grid Vert lines
 	yp := 14.0 * r.yInc
 	for idx, line := range r.xLines {
-		xp := float32(idx+1) * r.xInc
+		xp := float32(idx) * r.xInc
 		line.Position1 = fyne.NewPos(xp+r.xInc, r.yInc) //top
 		line.Position2 = fyne.NewPos(xp+r.xInc, yp+8)
 	}
@@ -891,7 +904,7 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 	// grid Horiz lines
 	xp := r.xInc
 	for idx, line := range r.yLines {
-		yp := float32(idx+1) * r.yInc
+		yp := float32(idx) * r.yInc
 		line.Position1 = fyne.NewPos(xp-8, yp+r.yInc) // left
 		line.Position2 = fyne.NewPos(xp*16, yp+r.yInc)
 	}
@@ -900,11 +913,11 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 	xp = r.xInc
 	yp = 14.0 * r.yInc
 	for idx, label := range r.xLabels {
-		xxp := float32(idx+1) * r.xInc
+		xxp := float32(idx+1) * r.xInc // starting at left
 		label.Move(fyne.NewPos(xxp+8, yp+10))
 	}
 	for idx, label := range r.yLabels {
-		yyp := float32(idx+1) * r.yInc
+		yyp := float32(idx+1) * r.yInc // starting at top
 		label.Move(fyne.NewPos(xp*0.80, yyp-8))
 	}
 
@@ -912,9 +925,6 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 	for key := range r.widget.dataPoints { // datasource
 		r.layoutSeries(key)
 	}
-
-	r.chartFrame.Resize(fyne.NewSize(r.xInc*15, r.yInc*13))
-	r.chartFrame.Move(fyne.NewPos(r.xInc, r.yInc))
 
 	ts := fyne.MeasureText(
 		r.topCenteredDesc.Text,
@@ -997,9 +1007,8 @@ func (r *lineChartRenderer) Objects() []fyne.CanvasObject {
 
 	for key, lines := range r.dataPoints {
 		for idx, line := range lines {
-			objs = append(objs, line)
 			marker := r.dataPointMarkers[key][idx]
-			objs = append(objs, marker)
+			objs = append(objs, marker, line)
 		}
 	}
 
@@ -1032,6 +1041,8 @@ func (r *lineChartRenderer) verifyDataPoints() {
 
 	var changedKeys []string
 	var changed bool
+	strokeSize := r.widget.dataPointStrokeSize
+	markerSize := strokeSize * 27
 	for key, points := range r.widget.dataPoints {
 		if nil == r.dataPoints[key] {
 			r.dataPoints[key] = []*canvas.Line{}
@@ -1042,11 +1053,11 @@ func (r *lineChartRenderer) verifyDataPoints() {
 			if idx > (len(r.dataPoints[key]) - 1) { // add added points
 				changed = true
 				x := canvas.NewLine(theme.PrimaryColorNamed((*point).ColorName()))
-				x.StrokeWidth = 2.0
+				x.StrokeWidth = strokeSize
 				r.dataPoints[key] = append(r.dataPoints[key], x)
 				z := canvas.NewCircle(theme.PrimaryColorNamed((*point).ColorName()))
-				z.StrokeWidth = 4.0
-				z.Resize(fyne.NewSize(5, 5))
+				z.StrokeWidth = strokeSize * 2
+				z.Resize(fyne.NewSize(markerSize, markerSize))
 				r.dataPointMarkers[key] = append(r.dataPointMarkers[key], z)
 			}
 		}

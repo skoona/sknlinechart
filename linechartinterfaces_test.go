@@ -16,7 +16,7 @@ var _ = Describe("Linechartinterfaces", func() {
 		dIntf := reflect.TypeOf((*sknlinechart.ChartDatapoint)(nil)).Elem()
 
 		var dataPoints map[string][]*sknlinechart.ChartDatapoint
-		chart, _ := sknlinechart.NewLineChart("Title", "Footer", &dataPoints)
+		chart, _ := sknlinechart.NewLineChart("Title", "Footer", 10, &dataPoints)
 		cIntf := reflect.TypeOf((*sknlinechart.LineChart)(nil)).Elem()
 
 		By("ChartDatapoint interface should be implemented")
