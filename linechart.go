@@ -401,7 +401,7 @@ found:
 				if me.Position.X > top.X && me.Position.X < bottom.X &&
 					me.Position.Y > top.Y-1 && me.Position.Y < bottom.Y {
 					w.debugLog("MouseMoved() matched Mouse: ", me.Position, ", Top: ", top, ", Bottom: ", bottom)
-					value := fmt.Sprint(key, ", Index: ", idx, ", Value: ", (*point).Value(), "    \n[", (*point).Timestamp(), "]")
+					value := fmt.Sprint(key, ", Index: ", idx, ", Value: ", (*point).Value(), "  [", (*point).Timestamp(), "]")
 					w.enableMouseContainer(value, (*point).ColorName(), &me.Position)
 					if w.OnHoverPointCallback != nil {
 						w.OnHoverPointCallback(strings.Clone(key), (*point).Copy())
@@ -939,8 +939,9 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 	r.topRightDesc.Move(fyne.Position{X: (s.Width - ts.Width) - theme.Padding(), Y: ts.Height / 4})
 	r.topLeftDesc.Move(fyne.NewPos(theme.Padding(), ts.Height/4))
 
-	msg := strings.Split(r.mouseDisplayContainer.Objects[1].(*widget.Label).Text, "\n")
+	msg := strings.Split(r.mouseDisplayContainer.Objects[1].(*widget.Label).Text, "[")
 	ts = fyne.MeasureText(msg[0], 14, r.mouseDisplayContainer.Objects[1].(*widget.Label).TextStyle)
+	//r.mouseDisplayContainer.Objects[1].(*widget.Label).Text = strings.Join(msg, "")
 	r.mouseDisplayContainer.Objects[1].(*widget.Label).Resize(fyne.NewSize(ts.Width-theme.Padding(), (2*ts.Height)+(theme.Padding()/2))) // allow room for wrap
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).Resize(fyne.NewSize(ts.Width+theme.Padding(), (2*ts.Height)+theme.Padding()))
 	// top edge
