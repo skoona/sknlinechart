@@ -401,7 +401,7 @@ found:
 				if me.Position.X > top.X && me.Position.X < bottom.X &&
 					me.Position.Y > top.Y-1 && me.Position.Y < bottom.Y {
 					w.debugLog("MouseMoved() matched Mouse: ", me.Position, ", Top: ", top, ", Bottom: ", bottom)
-					value := fmt.Sprint(key, ", Index: ", idx, ", Value: ", (*point).Value(), "  [", (*point).Timestamp(), "]")
+					value := fmt.Sprint(key, ", Index: ", idx, ", Value: ", (*point).Value(), "    [", (*point).Timestamp(), "]")
 					w.enableMouseContainer(value, (*point).ColorName(), &me.Position)
 					if w.OnHoverPointCallback != nil {
 						w.OnHoverPointCallback(strings.Clone(key), (*point).Copy())
@@ -745,7 +745,7 @@ func (r *lineChartRenderer) Refresh() {
 	r.widget.debugLog("lineChartRenderer::Refresh() ENTER")
 	startTime := time.Now()
 
-	r.verifyDataPoints()
+	//r.verifyDataPoints()
 
 	r.leftMiddleBox.RemoveAll()
 	for _, c := range r.widget.leftMiddleLabel {
@@ -920,6 +920,7 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 	}
 
 	// data points
+	r.verifyDataPoints()
 	for key := range r.widget.dataPoints { // datasource
 		r.layoutSeries(key)
 	}
@@ -928,7 +929,7 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 		r.topCenteredDesc.Text,
 		r.topCenteredDesc.TextSize,
 		r.topCenteredDesc.TextStyle)
-	r.topCenteredDesc.Move(fyne.Position{X: (s.Width - ts.Width) / 2, Y: theme.Padding() / 4})
+	r.topCenteredDesc.Move(fyne.Position{X: (s.Width - ts.Width) / 2, Y: -4})
 
 	ts = fyne.MeasureText(
 		r.topRightDesc.Text,
@@ -1035,8 +1036,8 @@ func (r *lineChartRenderer) verifyDataPoints() {
 	startTime := time.Now()
 
 	r.widget.debugLog("lineChartRenderer::VerifyDataPoints() ENTER")
-	r.widget.propertiesLock.Lock()
-	defer r.widget.propertiesLock.Unlock()
+	//r.widget.propertiesLock.Lock()
+	//defer r.widget.propertiesLock.Unlock()
 
 	var changedKeys []string
 	var changed bool
@@ -1064,10 +1065,10 @@ func (r *lineChartRenderer) verifyDataPoints() {
 			changedKeys = append(changedKeys, key)
 		}
 	}
-	if len(changedKeys) > 0 {
-		for _, series := range changedKeys {
-			r.layoutSeries(series)
-		}
-	}
+	//if len(changedKeys) > 0 {
+	//	for _, series := range changedKeys {
+	//		r.layoutSeries(series)
+	//	}
+	//}
 	r.widget.debugLog("lineChartRenderer::VerifyDataPoints() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
 }
