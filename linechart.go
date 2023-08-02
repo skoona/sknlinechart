@@ -745,9 +745,7 @@ func (r *lineChartRenderer) Refresh() {
 	r.widget.debugLog("lineChartRenderer::Refresh() ENTER")
 	startTime := time.Now()
 
-	if r.widget.datapointOrSeriesAdded {
-		r.verifyDataPoints()
-	}
+	r.verifyDataPoints()
 
 	r.leftMiddleBox.RemoveAll()
 	for _, c := range r.widget.leftMiddleLabel {
