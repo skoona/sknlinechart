@@ -224,23 +224,47 @@ func makeChart(title, footer string) (lc.LineChart, error) {
 		point := lc.NewChartDatapoint(val, theme.ColorRed, time.Now().Format(time.RFC1123))
 		dataPoints["Temperature"] = append(dataPoints["Temperature"], &point)
 	}
+	/*
+		// yScalefactor  represents the topmost value on the yScale divided by 13
+		// Ex: 650y = 650/13=50, also 130y is 130/13=10
+		// 13 because there are 13 vertical divisions not including zero
+		lineChart, err := lc.NewLineChart(title, footer, 55, &dataPoints)
+		if err != nil {
+			fmt.Println(err.Error())
+			if lineChart == nil {
+				panic(err.Error())
+			}
+		}
+		lineChart.SetLineStrokeSize(2.0)
+		lineChart.EnableDebugLogging(true)
+		lineChart.SetTopLeftLabel("top left")
 
-	lineChart, err := lc.NewLineChart(title, footer, &dataPoints)
+		lineChart.SetMiddleLeftLabel("Temperature")
+		lineChart.SetMiddleRightLabel("Humidity")
+
+		lineChart.SetBottomLeftLabel("bottom left")
+		lineChart.SetBottomRightLabel("bottom right")
+		lineChart.SetOnHoverPointCallback(func(series string, p lc.ChartDatapoint) {
+			logger.Printf("Chart Datapoint Selected Callback: series:%s, point: %v\n", series, p)
+		})
+
+	*/
+	opts := lc.NewChartOptions()
+	opts.Add(lc.WithDebugLogging(true))
+	opts.Add(lc.WithFooter("With Options"))
+	opts.Add(lc.WithTitle(title))
+	opts.Add(lc.WithLeftScaleLabel("Temperature"))
+	opts.Add(lc.WithRightScaleLabel("Humidity"))
+	opts.Add(lc.WithDataPoints(dataPoints))
+	opts.Add(lc.WithYScaleFactor(55))
+	opts.Add(lc.WithOnHoverPointCallback(func(series string, p lc.ChartDatapoint) {
+		fmt.Printf("Chart Datapoint Selected Callback: series:%s, point: %v\n", series, p)
+	}))
+
+	lineChart, err := lc.NewLineChartViaOptions(opts)
 	if err != nil {
 		fmt.Println(err.Error())
-		if lineChart == nil {
-			panic(err.Error())
-		}
 	}
-	lineChart.EnableDebugLogging(true)
-	lineChart.SetTopLeftLabel("top left")
-	//lineChart.SetTopRightLabel("top right")
-
-	lineChart.SetMiddleLeftLabel("Temperature")
-	lineChart.SetMiddleRightLabel("Humidity")
-
-	lineChart.SetBottomLeftLabel("bottom left")
-	lineChart.SetBottomRightLabel("bottom right")
 
 	return lineChart, err
 }
