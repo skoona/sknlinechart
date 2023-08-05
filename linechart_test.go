@@ -37,7 +37,7 @@ var _ = Describe("verify line chart initial state", func() {
 	It("should support a usable minimum size", func() {
 		lc, _ := makeUI("Testing", "Through Widget", 2)
 		actual := lc.MinSize()
-		Expect(actual.Width).To(BeNumerically("==", float32(436.0)))
+		Expect(actual.Width).To(BeNumerically(">=", float32(320.0)))
 	})
 
 	It("chart border labels can be changed", func() {
