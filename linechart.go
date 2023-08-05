@@ -62,7 +62,8 @@ import (
 // which will roll off older point beyond the  point limit.
 type LineChartSkn struct {
 	widget.BaseWidget       // Inherit from BaseWidget
-	datapointOrSeriesAdded  bool
+	dataSeriesAdded         bool
+	datapointAdded          bool
 	dataPointStrokeSize     float32
 	dataPointXLimit         int
 	dataPointYLimit         float32
@@ -124,7 +125,7 @@ func NewLineChart(topTitle, bottomTitle string, yScaleFactor int, dataPoints *ma
 	w := &LineChartSkn{ // Create this widget with an initial text value
 		dataPoints:              *dataPoints,
 		dataPointStrokeSize:     2.0,
-		datapointOrSeriesAdded:  true,
+		dataSeriesAdded:         true,
 		dataPointXLimit:         dpl,
 		dataPointYLimit:         float32(yScaleFactor * 13),
 		chartScaleMultiplier:    yScaleFactor,
@@ -326,7 +327,7 @@ func (w *LineChartSkn) ApplyDataSeries(seriesName string, newSeries []*ChartData
 	if len(newSeries) <= w.dataPointXLimit {
 		w.propertiesLock.Lock()
 		w.dataPoints[seriesName] = newSeries
-		w.datapointOrSeriesAdded = true
+		w.dataSeriesAdded = true
 		w.propertiesLock.Unlock()
 		w.Refresh()
 	} else {
@@ -354,7 +355,7 @@ func (w *LineChartSkn) ApplyDataPoint(seriesName string, newDataPoint *ChartData
 	} else {
 		w.dataPoints[seriesName] = ShiftSlice(newDataPoint, w.dataPoints[seriesName])
 	}
-	w.datapointOrSeriesAdded = true
+	w.datapointAdded = true
 	w.propertiesLock.Unlock()
 	w.Refresh()
 	w.debugLog("LineChartSkn::ApplyDataPoint() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
@@ -745,7 +746,7 @@ func (r *lineChartRenderer) Refresh() {
 	r.widget.debugLog("lineChartRenderer::Refresh() ENTER")
 	startTime := time.Now()
 
-	//r.verifyDataPoints()
+	r.verifyDataPoints(true)
 
 	r.leftMiddleBox.RemoveAll()
 	for _, c := range r.widget.leftMiddleLabel {
@@ -782,17 +783,19 @@ func (r *lineChartRenderer) Refresh() {
 	for _, v := range r.widget.objectsCache {
 		v.Refresh()
 	}
-	r.widget.datapointOrSeriesAdded = false
 
 	r.manageLabelVisibility()
 
 	r.widget.propertiesLock.RUnlock()
 
-	r.mouseDisplayContainer.Hide()
 	r.widget.propertiesLock.Lock()
+
+	r.mouseDisplayContainer.Hide()
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).StrokeColor = theme.PrimaryColorNamed(r.widget.mouseDisplayFrameColor)
 	r.mouseDisplayContainer.Objects[1].(*widget.Label).SetText(r.widget.mouseDisplayStr)
+
 	r.widget.propertiesLock.Unlock()
+
 	if r.widget.enableMousePointDisplay {
 		if r.widget.mouseDisplayStr != "" {
 			if !r.mouseDisplayContainer.Visible() {
@@ -919,11 +922,17 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 		label.Move(fyne.NewPos(xp*0.80, yyp-8))
 	}
 
-	// data points
-	r.verifyDataPoints()
-	for key := range r.widget.dataPoints { // datasource
-		r.layoutSeries(key)
+	// handle new data points
+	r.verifyDataPoints(false)
+
+	// handle new data series
+	if !r.widget.datapointAdded {
+		for key := range r.widget.dataPoints { // datasource
+			r.layoutSeries(key)
+		}
 	}
+	r.widget.dataSeriesAdded = false
+	r.widget.datapointAdded = false
 
 	ts := fyne.MeasureText(
 		r.topCenteredDesc.Text,
@@ -1032,23 +1041,27 @@ func (r *lineChartRenderer) Destroy() {
 
 // verifyDataPoints Renderer method to inject newly add data series or points
 // called by Refresh() to ensure new data is recognized
-func (r *lineChartRenderer) verifyDataPoints() {
+func (r *lineChartRenderer) verifyDataPoints(protect bool) {
 	startTime := time.Now()
 
 	r.widget.debugLog("lineChartRenderer::VerifyDataPoints() ENTER")
-	//r.widget.propertiesLock.Lock()
-	//defer r.widget.propertiesLock.Unlock()
+
+	if protect {
+		r.widget.propertiesLock.Lock()
+		defer r.widget.propertiesLock.Unlock()
+	}
 
 	var changedKeys []string
 	var changed bool
 	strokeSize := r.widget.dataPointStrokeSize
-	markerSize := strokeSize * 27
+	markerSize := strokeSize * 5
 	for key, points := range r.widget.dataPoints {
+		changed = false
 		if nil == r.dataPoints[key] {
 			r.dataPoints[key] = []*canvas.Line{}
 			r.dataPointMarkers[key] = []*canvas.Circle{}
+			changed = true
 		}
-		changed = false
 		for idx, point := range points {
 			if idx > (len(r.dataPoints[key]) - 1) { // add added points
 				changed = true
@@ -1065,10 +1078,10 @@ func (r *lineChartRenderer) verifyDataPoints() {
 			changedKeys = append(changedKeys, key)
 		}
 	}
-	//if len(changedKeys) > 0 {
-	//	for _, series := range changedKeys {
-	//		r.layoutSeries(series)
-	//	}
-	//}
+	if len(changedKeys) > 0 {
+		for _, series := range changedKeys {
+			r.layoutSeries(series)
+		}
+	}
 	r.widget.debugLog("lineChartRenderer::VerifyDataPoints() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
 }
