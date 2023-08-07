@@ -20,7 +20,7 @@ LineChart written to display periodic data samples on a line chart, with the abi
 * Any label left empty will not be displayed.
 * Horizontal and Vertical chart grid lines can also be turned off/on
 * There is a callback available which fires when a point if hovered over; passing the full datapoint and series name.
-* A `GraphPointSmoothing` interface is available to enable preprocessing of datapoints with a range of possible techniques, averaging was implemented as an example.
+* A `GraphPointSmoothing` interface is available to enable preprocessing of datapoints with a range of possible techniques, averaging was implemented as an example. Purple vs Yellow lines on the above chart illustrate the smoothing effect.
 
 ### SknLineChart Interface
 ```go
