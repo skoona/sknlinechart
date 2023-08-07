@@ -137,6 +137,44 @@ type LineChart interface {
 }
 ```
 
+ChartOptions as an alternate way to specify chart features
+```go
+/*
+    WithDataPoints(seriesData map[string][]*ChartDatapoint) ChartOption
+    WithOnHoverPointCallback(callBack func(series string, dataPoint ChartDatapoint)) ChartOption
+    WithDebugLogging(enable bool) ChartOption
+    WithColorLegend(enable bool) ChartOption
+    WithMousePointDisplay(enable bool) ChartOption
+    WithVertGridLines(enable bool) ChartOption
+    WithHorizGridLines(enable bool) ChartOption
+    WithDataPointMarkers(enable bool) ChartOption
+    WithMinSize(width, height float32) ChartOption
+    WithYScaleFactor(maxYScaleLabel int) ChartOption
+    WithRightScaleLabel(label string) ChartOption
+    WithLeftScaleLabel(label string) ChartOption
+    WithBottomRightLabel(label string) ChartOption
+    WithBottomLeftLabel(label string) ChartOption
+    WithTopRightLabel(label string) ChartOption
+    WithTopLeftLabel(label string) ChartOption
+    WithFooter(label string) ChartOption
+    WithTitle(label string) ChartOption
+    
+    NewChartOptions(opts ...ChartOption) *ChartOptions
+    func (o *ChartOptions) Add(opt ChartOption)
+
+    NewWithOptions(options *ChartOptions) (LineChart, error)
+    NewLineChartViaOptions(options *ChartOptions) (LineChart, error)
+*/
+
+// * Start by creating a ChartOptions container 
+// * then add individual ChartOption as needed.  
+// * Finish by passing container to New function.
+
+	options := NewChartOptions()
+    options.Add(WithTitle("MyTitle"))
+    lc, err := NewWithOptions(options) 
+```
+
 ## Fyne Custom Widget Strategy
 ```go
 /*
@@ -181,7 +219,8 @@ type LineChart interface {
 ```
 
 
-### Example
+### Example: ./cmd/sknlinechart/main.go
+with chart options
 ```go
 package main
 
@@ -224,31 +263,7 @@ func makeChart(title, footer string) (lc.LineChart, error) {
 		point := lc.NewChartDatapoint(val, theme.ColorRed, time.Now().Format(time.RFC1123))
 		dataPoints["Temperature"] = append(dataPoints["Temperature"], &point)
 	}
-	/*
-		// yScalefactor  represents the topmost value on the yScale divided by 13
-		// Ex: 650y = 650/13=50, also 130y is 130/13=10
-		// 13 because there are 13 vertical divisions not including zero
-		lineChart, err := lc.NewLineChart(title, footer, 55, &dataPoints)
-		if err != nil {
-			fmt.Println(err.Error())
-			if lineChart == nil {
-				panic(err.Error())
-			}
-		}
-		lineChart.SetLineStrokeSize(2.0)
-		lineChart.EnableDebugLogging(true)
-		lineChart.SetTopLeftLabel("top left")
 
-		lineChart.SetMiddleLeftLabel("Temperature")
-		lineChart.SetMiddleRightLabel("Humidity")
-
-		lineChart.SetBottomLeftLabel("bottom left")
-		lineChart.SetBottomRightLabel("bottom right")
-		lineChart.SetOnHoverPointCallback(func(series string, p lc.ChartDatapoint) {
-			logger.Printf("Chart Datapoint Selected Callback: series:%s, point: %v\n", series, p)
-		})
-
-	*/
 	opts := lc.NewChartOptions()
 	opts.Add(lc.WithDebugLogging(true))
 	opts.Add(lc.WithFooter("With Options"))
@@ -261,14 +276,85 @@ func makeChart(title, footer string) (lc.LineChart, error) {
 		fmt.Printf("Chart Datapoint Selected Callback: series:%s, point: %v\n", series, p)
 	}))
 
-	lineChart, err := lc.NewLineChartViaOptions(opts)
+	lineChart, err := lc.NewWithOptions(opts)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
 
 	return lineChart, err
 }
+```
+or with classic setters
+```go
+package main
 
+import (
+	"fmt"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
+	lc "github.com/skoona/sknlinechart"
+	"log"
+	"math/rand"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+)
+
+func makeChart(title, footer string) (lc.LineChart, error) {
+	dataPoints := map[string][]*lc.ChartDatapoint{} // legend, points
+
+	rand.NewSource(1000.0)
+	for x := 1; x < 151; x++ {
+		val := rand.Float32() * 75.0
+		if val > 75.0 {
+			val = 75.0
+		} else if val < 30.0 {
+			val = 30.0
+		}
+		point := lc.NewChartDatapoint(val, theme.ColorBlue, time.Now().Format(time.RFC1123))
+		dataPoints["Humidity"] = append(dataPoints["Humidity"], &point)
+	}
+	for x := 1; x < 151; x++ {
+		val := rand.Float32() * 75.0
+		if val > 95.0 {
+			val = 95.0
+		} else if val < 55.0 {
+			val = 55.0
+		}
+		point := lc.NewChartDatapoint(val, theme.ColorRed, time.Now().Format(time.RFC1123))
+		dataPoints["Temperature"] = append(dataPoints["Temperature"], &point)
+	}
+	// yScalefactor  represents the value of each of the 13 Y divisions
+	// Ex: 13 * 50 = 650, also 13 * 10 = 130,  50  and 10 being the yScalefactor value
+	// 650 and 130 would be the top of the Y scale as there are 13 vertical divisions not including zero
+    lineChart, err := lc.New(title, footer, 55, &dataPoints)
+    if err != nil {
+        fmt.Println(err.Error())
+        if lineChart == nil {
+            panic(err.Error())
+        }
+    }
+    lineChart.SetLineStrokeSize(2.0)
+    lineChart.EnableDebugLogging(true)
+    lineChart.SetTopLeftLabel("top left")
+
+    lineChart.SetMiddleLeftLabel("Temperature")
+    lineChart.SetMiddleRightLabel("Humidity")
+
+    lineChart.SetBottomLeftLabel("bottom left")
+    lineChart.SetBottomRightLabel("bottom right")
+    lineChart.SetOnHoverPointCallback(func(series string, p lc.ChartDatapoint) {
+        logger.Printf("Chart Datapoint Selected Callback: series:%s, point: %v\n", series, p)
+    })
+
+	return lineChart, err
+}
+```
+
+```go
 func main() {
 	systemSignalChannel := make(chan os.Signal, 1)
 	exitCode := 0
@@ -337,7 +423,6 @@ func main() {
 
 	os.Exit(exitCode)
 }
-
 ```
 
 ### Project Layout

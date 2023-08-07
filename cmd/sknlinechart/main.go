@@ -39,31 +39,9 @@ func makeChart(title, footer string) (lc.LineChart, error) {
 		point := lc.NewChartDatapoint(val, theme.ColorRed, time.Now().Format(time.RFC1123))
 		dataPoints["Temperature"] = append(dataPoints["Temperature"], &point)
 	}
-	/*
-		// yScalefactor  represents the topmost value on the yScale divided by 13
-		// Ex: 650y = 650/13=50, also 130y is 130/13=10
-		// 13 because there are 13 vertical divisions not including zero
-		lineChart, err := lc.NewLineChart(title, footer, 55, &dataPoints)
-		if err != nil {
-			fmt.Println(err.Error())
-			if lineChart == nil {
-				panic(err.Error())
-			}
-		}
-		lineChart.SetLineStrokeSize(2.0)
-		lineChart.EnableDebugLogging(true)
-		lineChart.SetTopLeftLabel("top left")
-
-		lineChart.SetMiddleLeftLabel("Temperature")
-		lineChart.SetMiddleRightLabel("Humidity")
-
-		lineChart.SetBottomLeftLabel("bottom left")
-		lineChart.SetBottomRightLabel("bottom right")
-		lineChart.SetOnHoverPointCallback(func(series string, p lc.ChartDatapoint) {
-			logger.Printf("Chart Datapoint Selected Callback: series:%s, point: %v\n", series, p)
-		})
-
-	*/
+	// yScalefactor  represents the value of each of the 13 Y divisions
+	// Ex: 13 * 50 = 650, also 13 * 10 = 130,  50  and 10 being the yScalefactor value
+	// 650 and 130 would be the top of the Y scale as there are 13 vertical divisions not including zero
 	opts := lc.NewChartOptions()
 	opts.Add(lc.WithDebugLogging(true))
 	opts.Add(lc.WithFooter("With Options"))
@@ -76,7 +54,7 @@ func makeChart(title, footer string) (lc.LineChart, error) {
 		fmt.Printf("Chart Datapoint Selected Callback: series:%s, point: %v\n", series, p)
 	}))
 
-	lineChart, err := lc.NewLineChartViaOptions(opts)
+	lineChart, err := lc.NewWithOptions(opts)
 	if err != nil {
 		fmt.Println(err.Error())
 	}

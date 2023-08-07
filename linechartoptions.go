@@ -57,6 +57,9 @@ func (o *ChartOptions) Apply(lc *LineChartSkn) error {
 // can return a valid chart object and an error object; errors really should be handled
 // and are caused by data points exceeding the container limit of 150; they will be truncated
 func NewLineChartViaOptions(options *ChartOptions) (LineChart, error) {
+	return NewLineChartViaOptions(options)
+}
+func NewWithOptions(options *ChartOptions) (LineChart, error) {
 
 	w := &LineChartSkn{ // Create this widget with an initial text value
 		dataPoints:              make(map[string][]*ChartDatapoint),

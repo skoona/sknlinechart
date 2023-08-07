@@ -101,6 +101,9 @@ var _ fyne.CanvasObject = (*LineChartSkn)(nil)
 // can return a valid chart object and an error object; errors really should be handled
 // and are caused by data points exceeding the container limit of 150; they will be truncated
 func NewLineChart(topTitle, bottomTitle string, yScaleFactor int, dataPoints *map[string][]*ChartDatapoint) (LineChart, error) {
+	return New(topTitle, bottomTitle, yScaleFactor, dataPoints)
+}
+func New(topTitle, bottomTitle string, yScaleFactor int, dataPoints *map[string][]*ChartDatapoint) (LineChart, error) {
 	if dataPoints == nil {
 		return nil, errors.New("dataPoint Params cannot be nil")
 	}
