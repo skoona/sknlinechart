@@ -465,11 +465,11 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 		label.Move(fyne.NewPos(xp*0.80, yyp-8))
 	}
 
-	// handle new data points
+	// handle new data points or series
 	r.verifyDataPoints(false)
 
 	// handle new data series
-	if !r.widget.datapointAdded {
+	if !r.widget.datapointAdded && !r.widget.dataSeriesAdded {
 		for key := range r.widget.dataPoints { // datasource
 			r.layoutSeries(key)
 		}
@@ -492,7 +492,6 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 
 	msg := strings.Split(r.mouseDisplayContainer.Objects[1].(*widget.Label).Text, "[")
 	ts = fyne.MeasureText(msg[0], 14, r.mouseDisplayContainer.Objects[1].(*widget.Label).TextStyle)
-	//r.mouseDisplayContainer.Objects[1].(*widget.Label).Text = strings.Join(msg, "")
 	r.mouseDisplayContainer.Objects[1].(*widget.Label).Resize(fyne.NewSize(ts.Width-theme.Padding(), (2*ts.Height)+(theme.Padding()/2))) // allow room for wrap
 	r.mouseDisplayContainer.Objects[0].(*canvas.Rectangle).Resize(fyne.NewSize(ts.Width+theme.Padding(), (2*ts.Height)+theme.Padding()))
 	// top edge
@@ -504,8 +503,8 @@ func (r *lineChartRenderer) Layout(s fyne.Size) {
 		r.widget.mouseDisplayPosition.X = theme.Padding() / 8
 	}
 	// right edge
-	if (r.widget.mouseDisplayPosition.X + ts.Width) > s.Width-(theme.Padding()/4) {
-		r.widget.mouseDisplayPosition.X = s.Width - ts.Width - theme.Padding() - (theme.Padding() / 4)
+	if (r.widget.mouseDisplayPosition.X + ts.Width) > s.Width-theme.Padding() {
+		r.widget.mouseDisplayPosition.X = s.Width - ts.Width - theme.Padding()
 	}
 	r.mouseDisplayContainer.Move(*r.widget.mouseDisplayPosition)
 
@@ -625,6 +624,7 @@ func (r *lineChartRenderer) verifyDataPoints(protect bool) {
 		for _, series := range changedKeys {
 			r.layoutSeries(series)
 		}
+		r.widget.dataSeriesAdded = false
 	}
 	r.widget.debugLog("lineChartRenderer::VerifyDataPoints() EXIT. Elapsed.microseconds: ", time.Until(startTime).Microseconds())
 }

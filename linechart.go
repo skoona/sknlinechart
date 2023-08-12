@@ -435,7 +435,7 @@ func (w *LineChartSkn) enableMouseContainer(value, frameColor string, mousePosit
 	w.mouseDisplayStr = value
 	w.mouseDisplayFrameColor = frameColor
 	ct := canvas.NewText(value, theme.PrimaryColorNamed(frameColor))
-	parts := strings.Split(value, "\n[")
+	parts := strings.Split(value, "[")
 	ts := fyne.MeasureText(parts[0], ct.TextSize, ct.TextStyle)
 	mp := &fyne.Position{X: mousePosition.X - (ts.Width / 2), Y: mousePosition.Y - (3 * ts.Height) - theme.Padding()}
 	w.mouseDisplayPosition = mp

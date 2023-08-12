@@ -93,7 +93,7 @@ func main() {
 		time.Sleep(time.Second)
 
 		smoothed := lc.NewGraphAverage("SmoothStream", 32)
-		for i := 0; i < 200; i++ {
+		for i := 0; i < 300; i++ {
 			if windowClosed {
 				break
 			}
@@ -107,7 +107,7 @@ func main() {
 			if windowClosed {
 				break
 			}
-			time.Sleep(time.Second)
+			time.Sleep(100 * time.Millisecond)
 		}
 	})(lineChart)
 
